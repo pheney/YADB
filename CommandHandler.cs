@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System.Reflection;
 using System.Threading.Tasks;
+using YADB.Common;
 
 namespace YADB
 {
@@ -56,7 +57,7 @@ namespace YADB
             {                
                 EmbedBuilder builder = new EmbedBuilder()
                 {
-                    Color = new Color(114, 137, 218),
+                    Color = Constants.SlateRed,
                     Description = "'" + msg.ToString().Substring(argPos) + "'"
                         + " failed: " + result.ErrorReason.ToString()
                 };

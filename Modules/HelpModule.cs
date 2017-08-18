@@ -2,6 +2,7 @@
 using Discord.Commands;
 using System.Linq;
 using System.Threading.Tasks;
+using YADB.Common;
 
 namespace YADB.Modules
 {
@@ -19,7 +20,7 @@ namespace YADB.Modules
         {
             var builder = new EmbedBuilder()
             {
-                Color = new Color(114, 137, 218),
+                Color = Constants.SlateBlue,
                 Description = "These are the commands you can say to me"
             };
             
@@ -65,7 +66,7 @@ namespace YADB.Modules
             
             var builder = new EmbedBuilder()
             {
-                Color = new Color(114, 137, 218),
+                Color = Constants.SlateBlue,
                 Description = "Here are some commands like **"+command+"**"
             };
 
