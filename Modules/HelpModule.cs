@@ -6,6 +6,7 @@ using YADB.Common;
 
 namespace YADB.Modules
 {
+    [Name("Help Commands")]
     public class HelpModule : ModuleBase<SocketCommandContext>
     {
         private CommandService _service;
@@ -15,9 +16,15 @@ namespace YADB.Modules
             _service = service;
         }
 
-        [Command("help")]
-        public async Task HelpAsync()
+        [Command("#help"), Alias("help")]
+        public async Task HelpAsync(string command = null)
         {
+            if (command != null)
+            {
+                await CommandHelpAsync(command);
+                return;
+            }
+
             var builder = new EmbedBuilder()
             {
                 Color = Constants.SlateBlue,
@@ -44,14 +51,24 @@ namespace YADB.Modules
                     });
                 }
             }
-            
+
+            builder.AddField(x =>
+            {
+                x.Name = "--";
+                x.Value = "Or you can have a conversation with me. "
+                + "Just make sure to always address me, so I know who you are talking to.";
+                x.IsInline = false;
+            });
+
+            //  Direct the user to look at their direct-messages
+            await Context.Channel.SendMessageAsync("I PM'd you some help.");
+
             //  Send help via direct-message to the user            
             var dmchannel = await Context.User.GetOrCreateDMChannelAsync();   
             await dmchannel.SendMessageAsync("", false, builder.Build());
         }
-
-        [Command("help")]
-        public async Task HelpAsync(string command)
+        
+        private async Task CommandHelpAsync(string command)
         {
             var result = _service.Search(Context, command);
             IDMChannel dmchannel;
@@ -82,7 +99,10 @@ namespace YADB.Modules
                     x.IsInline = false;
                 });
             }
-            
+
+            //  Direct the user to look at their direct-messages
+            await Context.Channel.SendMessageAsync("I PM'd you some help on that command.");
+
             //  Send help via direct-message to the user            
             dmchannel = await Context.User.GetOrCreateDMChannelAsync();
             await dmchannel.SendMessageAsync("", false, builder.Build());

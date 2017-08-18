@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace YADB.Modules
 {
-    [Name("Math")]
+    [Name("Math Commands")]
     public class MathModule : ModuleBase<SocketCommandContext>
     {
         //[Command("isinteger")]
@@ -16,7 +16,7 @@ namespace YADB.Modules
         //    await ReplyAsync("The text "+number+" is a number!");
         //}
 
-        [Command("mult")]
+        [Command("#mult")]
         [Remarks("Get the product of all the numbers.")]
         [MinPermissions(AccessLevel.User)]
         public async Task Mult(params float[] numbers)
@@ -26,7 +26,7 @@ namespace YADB.Modules
             await ReplyAsync(product + " is the product of "+ string.Join(", ", numbers));
         }
 
-        [Command("avg")]
+        [Command("#avg")]
         [Remarks("Compute mean value of all the numbers")]
         [MinPermissions(AccessLevel.User)]
         public async Task Avg(params float[] numbers)
@@ -35,7 +35,7 @@ namespace YADB.Modules
             await ReplyAsync(result + " is the average of " + string.Join(", ", numbers));
         }
 
-        [Command("sum")]
+        [Command("#sum")]
         [Remarks("Add all the numbers")]
         [MinPermissions(AccessLevel.User)]
         public async Task Sum(params float[] numbers)

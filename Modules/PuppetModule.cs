@@ -10,12 +10,12 @@ using YADB.Common;
 
 namespace YADB.Modules
 {
-    [Name("Puppet")]
+    [Name("Admin Commands")]
     [RequireContext(ContextType.DM)]
     public class PuppetModule : ModuleBase<SocketCommandContext>
     {
-        [Command("Announce"), Alias("A")]
-        [Remarks("PM the bot to make an announcement on another channel")]
+        [Command("#Announce")]
+        [Remarks("PM the bot to make an announcement on another channel, using channel ID")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Announce(ulong channelId, [Remainder]string message)
         {
@@ -67,8 +67,8 @@ namespace YADB.Modules
             }
         }
 
-        [Command("Announce"), Alias("Ann")]
-        [Remarks("PM the bot to make an announcement on another channel")]
+        [Command("#Announce")]
+        [Remarks("PM the bot to make an announcement on another channel, using channel name")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Announce(string channelName, [Remainder]string message)
         {
@@ -94,7 +94,7 @@ namespace YADB.Modules
                     Description = noChannelMessage
                 };
 
-                //  Send confirmation message via direct-message to the user            
+                //  Send problem message via direct-message to the user            
                 var dmchannel = await Context.User.GetOrCreateDMChannelAsync();
                 await dmchannel.SendMessageAsync("", false, builder.Build());
             }

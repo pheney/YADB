@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using YADB.Common;
@@ -21,6 +23,9 @@ namespace YADB
             await _cmds.AddModulesAsync(Assembly.GetEntryAssembly());    // Load all modules from the assembly.
             
             _client.MessageReceived += HandleCommandAsync;               // Register the messagereceived event to handle commands.
+
+            //  Patrick
+            _client.Ready += IntroductionAsync;
         }
 
         /// <summary>
@@ -52,21 +57,59 @@ namespace YADB
             // Try and execute a command with the given context.
             var result = await _cmds.ExecuteAsync(context, argPos);
 
-            // If execution failed, reply with the error message.
-            if (!result.IsSuccess)
-            {                
-                EmbedBuilder builder = new EmbedBuilder()
-                {
-                    Color = Constants.SlateRed,
-                    Description = "'" + msg.ToString().Substring(argPos) + "'"
-                        + " failed: " + result.ErrorReason.ToString()
-                };
+            if (result.IsSuccess) return;
 
-                //  Send errors via direct-message to the user
-                var dmchannel = await context.User.GetOrCreateDMChannelAsync();
-                await dmchannel.SendMessageAsync("", false, builder.Build());
+            // When execution fails, try different responses
+            switch (result.Error)
+            {
+                case CommandError.UnknownCommand:
+                    //  try chatting
+                    await Services.Chat.Reply(context, msg.Content);
+                    break;
+                default:
+                    //  Any other execution failures should show an error message
+                    await ErrorAsync(context, msg, argPos, result);
+                    break;
+            }        
+        }
+        
+        /// <summary>
+        /// 2017-6-18
+        /// </summary>
+        private async Task ErrorAsync(SocketCommandContext context, SocketMessage msg, int argPos, IResult result)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                Color = Constants.SlateRed,
+                Description = "Command failed: '" + msg.ToString().Substring(argPos) + "'\n"
+                    + "Reason: " + result.ErrorReason.ToString()
+            };
+
+            //  Send errors via direct-message to the user
+            var dmchannel = await context.User.GetOrCreateDMChannelAsync();
+            await dmchannel.SendMessageAsync("", false, builder.Build());
+        }
+
+        private async Task IntroductionAsync()
+        {
+            string response;
+            await Services.Chat.GetReply("hi", out response);
+
+            //  Main channel Id is always the same as the guild Id
+            //  according to Gavin.
+            ulong mainChannelId = _client.Guilds.First().Id;
+            var destinationChannel = _client.GetChannel(mainChannelId) as IMessageChannel;
+
+            if (destinationChannel == null)
+            {
+                //  User is not in a public channel
+
+                //  Send message via direct-message to the user            
+                var dmchannel = await _client.CurrentUser.GetOrCreateDMChannelAsync();
+                await dmchannel.SendMessageAsync(response);
+            } else{
+                await destinationChannel.SendMessageAsync(response);
             }
-           
         }
     }
 }

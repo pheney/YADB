@@ -5,11 +5,11 @@ using YADB.Preconditions;
 
 namespace YADB.Modules
 {
-    [Name("Moderator")]
+    [Name("Moderator Commands")]
     [RequireContext(ContextType.Guild)]
     public class ModeratorModule : ModuleBase<SocketCommandContext>
     {
-        [Command("kick")]
+        [Command("#kick")]
         [Remarks("Kick the specified user.")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Kick([Remainder]SocketGuildUser user)
