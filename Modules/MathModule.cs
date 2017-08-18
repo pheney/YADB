@@ -8,30 +8,40 @@ namespace YADB.Modules
     [Name("Math")]
     public class MathModule : ModuleBase<SocketCommandContext>
     {
-        [Command("isinteger")]
-        [Remarks("Check if the input text is a whole number.")]
+        //[Command("isinteger")]
+        //[Remarks("Check if the input text is a whole number.")]
+        //[MinPermissions(AccessLevel.User)]
+        //public async Task IsInteger(int number)
+        //{
+        //    await ReplyAsync("The text "+number+" is a number!");
+        //}
+
+        [Command("mult")]
+        [Remarks("Get the product of all the numbers.")]
         [MinPermissions(AccessLevel.User)]
-        public async Task IsInteger(int number)
+        public async Task Mult(params float[] numbers)
         {
-            await ReplyAsync("The text "+number+" is a number!");
+            float product = 1;
+            foreach (float n in numbers) product *= n;
+            await ReplyAsync(product + " is the product of "+ string.Join(", ", numbers));
         }
 
-        [Command("multiply")]
-        [Remarks("Get the product of two numbers.")]
+        [Command("avg")]
+        [Remarks("Compute mean value of all the numbers")]
         [MinPermissions(AccessLevel.User)]
-        public async Task Say(int a, int b)
+        public async Task Avg(params float[] numbers)
         {
-            int product = a * b;
-            await ReplyAsync("The product of `"+a+" * "+b+"` is `"+product+"`.");
+            float result = numbers.Sum() / numbers.Length;
+            await ReplyAsync(result + " is the average of " + string.Join(", ", numbers));
         }
 
-        [Command("addmany")]
-        [Remarks("Get the sum of many numbers")]
+        [Command("sum")]
+        [Remarks("Add all the numbers")]
         [MinPermissions(AccessLevel.User)]
-        public async Task Say(params int[] numbers)
+        public async Task Sum(params float[] numbers)
         {
-            int sum = numbers.Sum();
-            await ReplyAsync("The sum of `"+string.Join(", ", numbers)+"` is `"+sum+"`.");
+            float sum = numbers.Sum();
+            await ReplyAsync(sum + " is the sum of "+string.Join(", ", numbers));
         }
     }
 }

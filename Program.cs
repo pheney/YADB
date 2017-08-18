@@ -9,8 +9,8 @@ namespace YADB
     /// <summary>
     /// 2017-8-17
     /// TODO:
-    ///     FIRST. Compile and run this project AS IS. Make NO goddamn changes
-    ///         until this thing works as is.
+    ///     DONE -- Compile and run this project AS IS. Make NO goddamn changes
+    ///             until this thing works as is.
     ///     #. Add command listener that responds to the bot's name, e.g. "Pqq" instead of
     ///         just "!command"
     ///     #. Integrate CleverBot module from my console application.
@@ -18,6 +18,9 @@ namespace YADB
     ///     #. Integrate Inspirobot, ref: https://github.com/bhberson/InspiroBotSlack
     ///         URL to hit: https://inspirobotslack.herokuapp.com/inspirobot
     ///         Image for icon: http://inspirobot.me/website/images/inspirobot-dark-green.png 
+    ///     #. Add verbosity levels to console output, including colors
+    ///     #. Redirect !Help output to a private message
+    ///     #. Filter !Help results based on user access level
     /// </summary>
     public class Program
     {
