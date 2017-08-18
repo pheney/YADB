@@ -8,6 +8,18 @@ namespace YADB.Modules
     [Name("Example")]
     public class ExampleModule : ModuleBase<SocketCommandContext>
     {
+        /// <summary>
+        /// 2017-8-17
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        [Command("hi"), Alias("hello")]
+        [MinPermissions(AccessLevel.User)]
+        public async Task Greet([Remainder]string text = null)
+        {
+            await ReplyAsync("hi there, to you");
+        }
+
         [Command("say"), Alias("s")]
         [Remarks("Make the bot say something")]
         [MinPermissions(AccessLevel.BotOwner)]

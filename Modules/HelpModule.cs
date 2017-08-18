@@ -17,11 +17,10 @@ namespace YADB.Modules
         [Command("help")]
         public async Task HelpAsync()
         {
-            string prefix = Configuration.Load().Prefix;
             var builder = new EmbedBuilder()
             {
                 Color = new Color(114, 137, 218),
-                Description = "These are the commands you can use"
+                Description = "These are the commands you can say to me"
             };
             
             foreach (var module in _service.Modules)
@@ -31,7 +30,7 @@ namespace YADB.Modules
                 {
                     var result = await cmd.CheckPreconditionsAsync(Context);
                     if (result.IsSuccess)
-                        description += prefix+cmd.Aliases.First()+"\n";
+                        description += cmd.Aliases.First()+"\n";
                 }
                 
                 if (!string.IsNullOrWhiteSpace(description))
@@ -44,22 +43,26 @@ namespace YADB.Modules
                     });
                 }
             }
-
-            await ReplyAsync("", false, builder.Build());
+            
+            //  Send help via direct-message to the user            
+            var dmchannel = await Context.User.GetOrCreateDMChannelAsync();   
+            await dmchannel.SendMessageAsync("", false, builder.Build());
         }
 
         [Command("help")]
         public async Task HelpAsync(string command)
         {
             var result = _service.Search(Context, command);
+            IDMChannel dmchannel;
 
             if (!result.IsSuccess)
             {
-                await ReplyAsync("Sorry, I couldn't find a command like **"+command+"**.");
+                //  Send help via direct-message to the user            
+                dmchannel = await Context.User.GetOrCreateDMChannelAsync();
+                await dmchannel.SendMessageAsync("Sorry, I couldn't find a command like **" + command + "**.");
                 return;
             }
-
-            string prefix = Configuration.Load().Prefix;
+            
             var builder = new EmbedBuilder()
             {
                 Color = new Color(114, 137, 218),
@@ -78,8 +81,10 @@ namespace YADB.Modules
                     x.IsInline = false;
                 });
             }
-
-            await ReplyAsync("", false, builder.Build());
+            
+            //  Send help via direct-message to the user            
+            dmchannel = await Context.User.GetOrCreateDMChannelAsync();
+            await dmchannel.SendMessageAsync("", false, builder.Build());
         }
     }
 }

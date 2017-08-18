@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -21,6 +22,10 @@ namespace YADB
             _client.MessageReceived += HandleCommandAsync;               // Register the messagereceived event to handle commands.
         }
 
+        /// <summary>
+        /// 2017-8-17
+        /// </summary>
+        /// <param name="s"></param>
         private async Task HandleCommandAsync(SocketMessage s)
         {
             var msg = s as SocketUserMessage;
@@ -29,15 +34,38 @@ namespace YADB
             
             var context = new SocketCommandContext(_client, msg);     // Create a new command context.
 
-            int argPos = 0;                                           // Check if the message has either a string or mention prefix.
-            if (msg.HasStringPrefix(Configuration.Load().Prefix, ref argPos) ||
-                msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
-            {                                                         // Try and execute a command with the given context.
-                var result = await _cmds.ExecuteAsync(context, argPos);
-
-                if (!result.IsSuccess)                                // If execution failed, reply with the error message.
-                    await context.Channel.SendMessageAsync(result.ToString());
+            //  Check if the message has any of the string prefixes
+            int argPos = 0;
+            bool hasStringPrefix = false;
+            foreach (string prefix in Configuration.Load().Prefix)
+            {
+                hasStringPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
             }
+
+            //  Check if the message has a mention prefix
+            bool hasMentionPrefix = msg.HasMentionPrefix(_client.CurrentUser, ref argPos);
+            
+            //  Do nothing if there is no prefix to get the bot's attention
+            if (!hasStringPrefix && !hasMentionPrefix) return;
+            
+            // Try and execute a command with the given context.
+            var result = await _cmds.ExecuteAsync(context, argPos);
+
+            // If execution failed, reply with the error message.
+            if (!result.IsSuccess)
+            {                
+                EmbedBuilder builder = new EmbedBuilder()
+                {
+                    Color = new Color(114, 137, 218),
+                    Description = "'" + msg.ToString().Substring(argPos) + "'"
+                        + " failed: " + result.ErrorReason.ToString()
+                };
+
+                //  Send errors via direct-message to the user
+                var dmchannel = await context.User.GetOrCreateDMChannelAsync();
+                await dmchannel.SendMessageAsync("", false, builder.Build());
+            }
+           
         }
     }
 }

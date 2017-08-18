@@ -16,7 +16,7 @@ namespace YADB
         /// <summary> Ids of users who will have owner access to the bot. </summary>
         public ulong[] Owners { get; set; }
         /// <summary> Your bot's command prefix. </summary>
-        public string Prefix { get; set; } = "!";
+        public string[] Prefix { get; set; } = new string[] { "!" };
         /// <summary> Your bot's login token. </summary>
         public string Token { get; set; } = "";
 
