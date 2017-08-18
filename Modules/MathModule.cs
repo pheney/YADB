@@ -1,9 +1,9 @@
 ﻿using Discord.Commands;
-using Example.Preconditions;
+using YADB.Preconditions;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Example.Modules
+namespace YADB.Modules
 {
     [Name("Math")]
     public class MathModule : ModuleBase<SocketCommandContext>

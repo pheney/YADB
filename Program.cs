@@ -1,9 +1,10 @@
 ﻿using Discord;
+using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
 
-namespace Example
+namespace YADB
 {
     /// <summary>
     /// 2017-8-17
@@ -32,6 +33,7 @@ namespace Example
                                                              // Create a new instance of DiscordSocketClient.
             _client = new DiscordSocketClient(new DiscordSocketConfig()
             {
+                WebSocketProvider = WS4NetProvider.Instance,
                 LogLevel = LogSeverity.Verbose,              // Specify console verbose information level.
                 MessageCacheSize = 1000                      // Tell discord.net how long to store messages (per channel).
             });

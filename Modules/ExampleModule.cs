@@ -1,9 +1,9 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
-using Example.Preconditions;
+using YADB.Preconditions;
 using System.Threading.Tasks;
 
-namespace Example.Modules
+namespace YADB.Modules
 {
     [Name("Example")]
     public class ExampleModule : ModuleBase<SocketCommandContext>

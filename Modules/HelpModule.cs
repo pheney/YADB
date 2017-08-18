@@ -3,7 +3,7 @@ using Discord.Commands;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Example.Modules
+namespace YADB.Modules
 {
     public class HelpModule : ModuleBase<SocketCommandContext>
     {

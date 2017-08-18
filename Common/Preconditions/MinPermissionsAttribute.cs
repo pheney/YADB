@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Example.Preconditions
+namespace YADB.Preconditions
 {
     /// <summary>
     /// Set the minimum permission required to use a module or command

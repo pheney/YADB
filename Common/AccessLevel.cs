@@ -1,4 +1,4 @@
-﻿namespace Example
+﻿namespace YADB
 {
     /// <summary>
     /// The enum used to specify permission levels. A lower

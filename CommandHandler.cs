@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Example
+namespace YADB
 {
     /// <summary> Detect whether a message is a command, then execute it. </summary>
     public class CommandHandler
