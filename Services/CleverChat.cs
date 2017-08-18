@@ -37,7 +37,7 @@ namespace YADB.Services
             catch (Exception)
             {
                 //  ignore
-                Program.AsyncConsoleMessage("Unable to load conversation token. This will be a new conversation.", fg: warningColor);                
+                Program.AsyncConsoleMessage("Unable to load conversation token. This will be a new conversation.", fg: warningColor);
             }
 
             cs = result;
@@ -138,7 +138,7 @@ namespace YADB.Services
                 //413: request too large if you send a request over 16Kb
                 //502 or 504: unable to get reply from API server, please contact us
                 //503: too many requests from a single IP address or API key
-                response = "There are "+e.Status+" reasons for me not to respond to that.";
+                response = "There are " + e.Status + " reasons for me not to respond to that.";
             }
             return Task.CompletedTask;
         }

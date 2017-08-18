@@ -30,7 +30,7 @@ namespace YADB.Modules
                 Color = Constants.SlateBlue,
                 Description = "These are the commands you can say to me"
             };
-            
+
             foreach (var module in _service.Modules)
             {
                 string description = null;
@@ -38,9 +38,9 @@ namespace YADB.Modules
                 {
                     var result = await cmd.CheckPreconditionsAsync(Context);
                     if (result.IsSuccess)
-                        description += cmd.Aliases.First()+"\n";
+                        description += cmd.Aliases.First() + "\n";
                 }
-                
+
                 if (!string.IsNullOrWhiteSpace(description))
                 {
                     builder.AddField(x =>
@@ -64,10 +64,10 @@ namespace YADB.Modules
             await Context.Channel.SendMessageAsync("I PM'd you some help.");
 
             //  Send help via direct-message to the user            
-            var dmchannel = await Context.User.GetOrCreateDMChannelAsync();   
+            var dmchannel = await Context.User.GetOrCreateDMChannelAsync();
             await dmchannel.SendMessageAsync("", false, builder.Build());
         }
-        
+
         private async Task CommandHelpAsync(string command)
         {
             var result = _service.Search(Context, command);
@@ -80,11 +80,11 @@ namespace YADB.Modules
                 await dmchannel.SendMessageAsync("Sorry, I couldn't find a command like **" + command + "**.");
                 return;
             }
-            
+
             var builder = new EmbedBuilder()
             {
                 Color = Constants.SlateBlue,
-                Description = "Here are some commands like **"+command+"**"
+                Description = "Here are some commands like **" + command + "**"
             };
 
             foreach (var match in result.Commands)
@@ -94,8 +94,8 @@ namespace YADB.Modules
                 builder.AddField(x =>
                 {
                     x.Name = string.Join(", ", cmd.Aliases);
-                    x.Value = "Parameters: "+string.Join(", ", cmd.Parameters.Select(p => p.Name))+"\n" + 
-                              "Remarks: "+cmd.Remarks;
+                    x.Value = "Parameters: " + string.Join(", ", cmd.Parameters.Select(p => p.Name)) + "\n" +
+                              "Remarks: " + cmd.Remarks;
                     x.IsInline = false;
                 });
             }

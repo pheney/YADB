@@ -7,6 +7,10 @@ using Discord;
 using System.Collections.Generic;
 using System;
 using YADB.Common;
+using System.Net;
+using System.Text;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace YADB.Modules
 {
@@ -14,6 +18,39 @@ namespace YADB.Modules
     [RequireContext(ContextType.DM)]
     public class PuppetModule : ModuleBase<SocketCommandContext>
     {
+        [Command("#Inspire"), Alias("#inspire me")]
+        [Remarks("Post a fresh image from Inspirobot in the current channel")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task Inspire()
+        {
+            string response = "";
+            string url = "http://www.inspirobot.me/api?generate=true";
+
+            //  Build the web request
+            WebRequest webRequest = WebRequest.Create(url);
+            //webRequest.ContentType = "application/json"
+            webRequest.ContentType = "application/text";
+
+            //  Create an empty response
+            WebResponse webResp = null;
+
+            try
+            {
+                //  Execute the request and put the result into response
+                webResp = webRequest.GetResponse();
+                var encoding = ASCIIEncoding.ASCII;
+                using (var reader = new System.IO.StreamReader(webResp.GetResponseStream(), encoding))
+                {
+                    response = await reader.ReadToEndAsync();
+                }
+            }
+            catch (WebException e)
+            {
+                response = "There was a problem with the inspirobot request.\n\n" + e.ToString();
+            }
+            await ReplyAsync(response);
+        }
+
         [Command("#Announce")]
         [Remarks("PM the bot to make an announcement on another channel, using channel ID")]
         [MinPermissions(AccessLevel.ServerMod)]
@@ -37,7 +74,7 @@ namespace YADB.Modules
                 confirmMessage = confirmMessage
                     .Replace("{message}", ellipsisMessage)
                     .Replace("{channel}", channelName);
-                
+
                 var builder = new EmbedBuilder()
                 {
                     Color = Constants.SlateGreen,
@@ -54,7 +91,7 @@ namespace YADB.Modules
                 errorMessage = errorMessage
                     .Replace("{message}", ellipsisMessage)
                     .Replace("{channel}", channelName);
-                
+
                 var builder = new EmbedBuilder()
                 {
                     Color = Constants.SlateYellow,
@@ -85,7 +122,7 @@ namespace YADB.Modules
                     + "\nDid you mean one of these?\n";
                 noChannelMessage = noChannelMessage
                     .Replace("{channel}", channelName);
-                
+
                 foreach (var c in channels) noChannelMessage += "\n  " + c.Name;
 
                 var builder = new EmbedBuilder()

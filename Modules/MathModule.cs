@@ -23,7 +23,7 @@ namespace YADB.Modules
         {
             float product = 1;
             foreach (float n in numbers) product *= n;
-            await ReplyAsync(product + " is the product of "+ string.Join(", ", numbers));
+            await ReplyAsync(product + " is the product of " + string.Join(", ", numbers));
         }
 
         [Command("#avg")]
@@ -41,7 +41,7 @@ namespace YADB.Modules
         public async Task Sum(params float[] numbers)
         {
             float sum = numbers.Sum();
-            await ReplyAsync(sum + " is the sum of "+string.Join(", ", numbers));
+            await ReplyAsync(sum + " is the sum of " + string.Join(", ", numbers));
         }
     }
 }

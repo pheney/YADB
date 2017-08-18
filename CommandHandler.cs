@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using YADB.Common;
+using YADB.Modules;
 
 namespace YADB
 {
@@ -19,9 +20,16 @@ namespace YADB
         {
             _client = c;                                                 // Save an instance of the discord client.
             _cmds = new CommandService();                                // Create a new instance of the commandservice.                              
-            
-            await _cmds.AddModulesAsync(Assembly.GetEntryAssembly());    // Load all modules from the assembly.
-            
+
+            // Load all modules from the assembly.
+            //await _cmds.AddModulesAsync(Assembly.GetEntryAssembly());    
+
+            //  Load modules individually.
+            //  Because this project has more modules than I want to use all the time.
+            await _cmds.AddModuleAsync<PuppetModule>();
+            await _cmds.AddModuleAsync<HelpModule>();
+            await _cmds.AddModuleAsync<ModeratorModule>();
+
             _client.MessageReceived += HandleCommandAsync;               // Register the messagereceived event to handle commands.
 
             //  Patrick
@@ -37,7 +45,7 @@ namespace YADB
             var msg = s as SocketUserMessage;
             if (msg == null)                                          // Check if the received message is from a user.
                 return;
-            
+
             var context = new SocketCommandContext(_client, msg);     // Create a new command context.
 
             //  Check if the message has any of the string prefixes
@@ -50,10 +58,10 @@ namespace YADB
 
             //  Check if the message has a mention prefix
             bool hasMentionPrefix = msg.HasMentionPrefix(_client.CurrentUser, ref argPos);
-            
+
             //  Do nothing if there is no prefix to get the bot's attention
             if (!hasStringPrefix && !hasMentionPrefix) return;
-            
+
             // Try and execute a command with the given context.
             var result = await _cmds.ExecuteAsync(context, argPos);
 
@@ -70,9 +78,9 @@ namespace YADB
                     //  Any other execution failures should show an error message
                     await ErrorAsync(context, msg, argPos, result);
                     break;
-            }        
+            }
         }
-        
+
         /// <summary>
         /// 2017-6-18
         /// </summary>
@@ -107,7 +115,9 @@ namespace YADB
                 //  Send message via direct-message to the user            
                 var dmchannel = await _client.CurrentUser.GetOrCreateDMChannelAsync();
                 await dmchannel.SendMessageAsync(response);
-            } else{
+            }
+            else
+            {
                 await destinationChannel.SendMessageAsync(response);
             }
         }

@@ -7,20 +7,17 @@ using System.Threading.Tasks;
 namespace YADB
 {
     /// <summary>
-    /// 2017-8-17
-    /// TODO:
+    /// 2017-8-18
     ///     DONE -- Compile and run this project AS IS. Make NO goddamn changes
     ///             until this thing works as is.
     ///     DONE -- Add command listener that responds to the bot's name, e.g. "Pqq" instead of
     ///             just "!command"
-    ///     #. Integrate CleverBot module from my console application.
-    ///     #. Integrate OED module from my thesaurus console applciation.
-    ///     #. Integrate Inspirobot, ref: https://github.com/bhberson/InspiroBotSlack
-    ///         URL to hit: https://inspirobotslack.herokuapp.com/inspirobot
-    ///         Image for icon: http://inspirobot.me/website/images/inspirobot-dark-green.png 
+    ///     DONE -- Integrate CleverBot module from my console application.
+    ///     DONE -- Integrate Inspirobot
     ///     DONE -- Add verbosity levels to console output, including colors
     ///     DONE -- Redirect !Help output to a private message
     ///     DONE -- Filter !Help results based on user access level
+    ///     #### -- Integrate OED module from my thesaurus console application.
     /// </summary>
     public class Program
     {
@@ -46,13 +43,13 @@ namespace YADB
 
             //  Custom console writer - Patrick
             _client.Log += (l) => AsyncConsoleLog(l);
-                                   
+
             await _client.LoginAsync(TokenType.Bot, Configuration.Load().Token);
             await _client.StartAsync();
 
             _commands = new CommandHandler();                // Initialize the command handler service
             await _commands.InstallAsync(_client);
-            
+
             await Task.Delay(-1);                            // Prevent the console window from closing.
         }
 
@@ -89,7 +86,7 @@ namespace YADB
                     //  do nothing
                     break;
             }
-            
+
             string message = string.Format("{0} [{1}] {2}: {3}", DateTime.Now, logMessage.Severity.ToString().Substring(0, 1), logMessage.Source, logMessage.Message);
             await AsyncConsoleMessage(message, fg);
         }
@@ -99,7 +96,7 @@ namespace YADB
         /// Custom logger allows for changing log level.
         /// Allows color coded console messages.
         /// </summary>
-        public static async Task AsyncConsoleMessage(string message, ConsoleColor fg =ConsoleColor.Gray, ConsoleColor bg = ConsoleColor.Black, bool newline =true)
+        public static async Task AsyncConsoleMessage(string message, ConsoleColor fg = ConsoleColor.Gray, ConsoleColor bg = ConsoleColor.Black, bool newline = true)
         {
             ConsoleColor ofg, obg;
 

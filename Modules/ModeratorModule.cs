@@ -16,6 +16,6 @@ namespace YADB.Modules
         {
             await ReplyAsync("cya " + user.Mention + " :wave:");
             await user.KickAsync();
-        }        
+        }
     }
 }

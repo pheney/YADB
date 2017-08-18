@@ -38,7 +38,7 @@ namespace YADB.Modules
             {
                 var user = Context.User as SocketGuildUser;
                 await user.ModifyAsync(x => x.Nickname = name);
-                await ReplyAsync(user.Mention + " I changed your name to **"+name+"**");
+                await ReplyAsync(user.Mention + " I changed your name to **" + name + "**");
             }
 
             [Command("botnick")]
@@ -48,7 +48,7 @@ namespace YADB.Modules
             {
                 var self = await Context.Guild.GetCurrentUserAsync();
                 await self.ModifyAsync(x => x.Nickname = name);
-                await ReplyAsync("I changed my name to **"+name+"**");
+                await ReplyAsync("I changed my name to **" + name + "**");
             }
         }
     }

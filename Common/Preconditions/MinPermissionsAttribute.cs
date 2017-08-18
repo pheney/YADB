@@ -29,7 +29,7 @@ namespace YADB.Preconditions
             else
                 return Task.FromResult(PreconditionResult.FromError("Insufficient permissions."));
         }
-        
+
         public AccessLevel GetPermission(ICommandContext c)
         {
             if (c.User.IsBot)                                    // Prevent other bots from executing commands.
