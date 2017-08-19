@@ -2,6 +2,7 @@
 Yet Another Discord Bot
 
 Based on https://github.com/Aux/Discord.Net-Example
+
 Advanced Examples: https://github.com/Aux/Dogey
 
 Note:
