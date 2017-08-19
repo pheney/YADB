@@ -29,28 +29,37 @@ namespace YADB
 
         public async Task StartAsync()
         {
-            Configuration.EnsureExists();                    // Ensure the configuration file has been created.
-                                                             // Create a new instance of DiscordSocketClient.
+            //  Ensure the configuration file has been created
+            Configuration.EnsureExists();                    
+                                                             
+            //  Create a new instance of DiscordSocketClient
             _client = new DiscordSocketClient(new DiscordSocketConfig()
             {
                 WebSocketProvider = WS4NetProvider.Instance,
-                LogLevel = LogSeverity.Verbose,              // Specify console verbose information level.
-                MessageCacheSize = 1000                      // Tell discord.net how long to store messages (per channel).
+
+                //  Specify console verbose information level
+                LogLevel = LogSeverity.Verbose,
+
+                //  Tell discord.net how long to store messages (per channel)
+                MessageCacheSize = 1000                      
             });
 
-            //_client.Log += (l)                               // Register the console log event.
-            //    => Console.Out.WriteLineAsync(l.ToString());
-
-            //  Custom console writer - Patrick
+            //  Register the console log event using a custom console writer
             _client.Log += (l) => AsyncConsoleLog(l);
 
+            //  Basic console log output
+            //_client.Log += (l) => Console.Out.WriteLineAsync(l.ToString());
+            
+            //  Connect to Discord
             await _client.LoginAsync(TokenType.Bot, Configuration.Load().Token);
             await _client.StartAsync();
 
-            _commands = new CommandHandler();                // Initialize the command handler service
+            //  Initialize the command handler service
+            _commands = new CommandHandler();                
             await _commands.InstallAsync(_client);
 
-            await Task.Delay(-1);                            // Prevent the console window from closing.
+            //  Prevent the console window from closing
+            await Task.Delay(-1);                            
         }
 
         /// <summary>

@@ -5,6 +5,7 @@ using System;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using YADB.Common;
 
 namespace YADB.Services
 {
@@ -74,7 +75,9 @@ namespace YADB.Services
 
         static string key = "kv85jCC3ypppmqcLrWHip1cdFZrloGIQ";
         static string de = "5";
-        static bool enabled = true;
+        static bool chatEnabled = true;
+
+        public static bool ChatStatus { get { return chatEnabled; } }
 
         /// <summary>
         /// 2017-8-18
@@ -83,13 +86,13 @@ namespace YADB.Services
         /// </summary>
         public static Task EnableChat(bool enabled)
         {
-            Chat.enabled = enabled;
+            Chat.chatEnabled = enabled;
             return Task.CompletedTask;
         }
-
+        
         public static async Task Reply(ICommandContext context, string message)
         {
-            if (!enabled) return;
+            if (!chatEnabled) return;
 
             //  stopwatch commented out
             //  I think stopwatch is blocking the message handling thread

@@ -113,8 +113,7 @@ namespace YADB
             string response;
             await Services.Chat.GetReply(Constants.Greetings.Random(), out response);
 
-            //  Main channel Id is always the same as the guild Id
-            //  according to Gavin.
+            //  Main channel Id is always the same as the guild Id, according to Gavin.
             ulong mainChannelId = _client.Guilds.First().Id;
             var destinationChannel = _client.GetChannel(mainChannelId) as IMessageChannel;
 
@@ -130,6 +129,8 @@ namespace YADB
             {
                 await destinationChannel.SendMessageAsync(response);
             }
+
+            await Services.Chat.EnableChat(true);
         }
     }
 }
