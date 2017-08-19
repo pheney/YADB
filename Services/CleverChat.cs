@@ -74,13 +74,36 @@ namespace YADB.Services
 
         static string key = "kv85jCC3ypppmqcLrWHip1cdFZrloGIQ";
         static string de = "5";
+        static bool enabled = true;
+
+        /// <summary>
+        /// 2017-8-18
+        /// This allows the cycle to be distrupted when the bot
+        /// starts a conversation with itself.
+        /// </summary>
+        public static Task EnableChat(bool enabled)
+        {
+            Chat.enabled = enabled;
+            return Task.CompletedTask;
+        }
 
         public static async Task Reply(ICommandContext context, string message)
         {
+            if (!enabled) return;
+
+            //  stopwatch commented out
+            //  I think stopwatch is blocking the message handling thread
+            //Stopwatch s = new Stopwatch();
+            //s.Start();
             await LoadConversationToken(csFile);
             string response;
             await GetReply(message, out response);
-            await context.Channel.SendMessageAsync(response);
+            string userName = context.User.Username;
+            //s.Stop();
+            //long elapsed = s.ElapsedMilliseconds;
+            //int waitDelay = 500 * (Constants.rnd.Next(6) + 1) - (int)elapsed;
+            //await Task.Delay(Math.Min(0,waitDelay));
+            await context.Channel.SendMessageAsync(userName +", " +response);                        
             await StoreConversationToken(csFile, cs);
         }
 

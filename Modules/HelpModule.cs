@@ -16,7 +16,7 @@ namespace YADB.Modules
             _service = service;
         }
 
-        [Command("#help"), Alias("help")]
+        [Command("#help"), Alias("help", "#h")]
         public async Task HelpAsync(string command = null)
         {
             if (command != null)
@@ -28,7 +28,7 @@ namespace YADB.Modules
             var builder = new EmbedBuilder()
             {
                 Color = Constants.SlateBlue,
-                Description = "These are the commands you can say to me"
+                Description = "These are the commands you can say to me."
             };
 
             foreach (var module in _service.Modules)

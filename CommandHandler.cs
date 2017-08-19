@@ -101,7 +101,7 @@ namespace YADB
         private async Task IntroductionAsync()
         {
             string response;
-            await Services.Chat.GetReply("hi", out response);
+            await Services.Chat.GetReply(Constants.Greetings.Random(), out response);
 
             //  Main channel Id is always the same as the guild Id
             //  according to Gavin.
