@@ -71,12 +71,22 @@ namespace YADB
             switch (result.Error)
             {
                 case CommandError.UnknownCommand:
-                    //  try chatting
-                    await Services.Chat.Reply(context, msg.Content);
+                    //  distinguish between chatting and fumbled #commands
+                    string[] words = msg.Content.Split(' ');
+                    if (words[1].StartsWith("#"))
+                    {
+                        //  fumbled #command
+                        await ErrorAsync(context, words[1], "typo?");
+                    }
+                    else
+                    {
+                        //  try chatting
+                        await Services.Chat.Reply(context, msg.Content);
+                    }
                     break;
                 default:
                     //  Any other execution failures should show an error message
-                    await ErrorAsync(context, msg, argPos, result);
+                    await ErrorAsync(context, msg.ToString().Substring(argPos), result.ErrorReason);
                     break;
             }
         }
@@ -84,13 +94,13 @@ namespace YADB
         /// <summary>
         /// 2017-6-18
         /// </summary>
-        private async Task ErrorAsync(SocketCommandContext context, SocketMessage msg, int argPos, IResult result)
+        private async Task ErrorAsync(SocketCommandContext context, string message, string reason)
         {
             EmbedBuilder builder = new EmbedBuilder()
             {
                 Color = Constants.SlateRed,
-                Description = "Command failed: '" + msg.ToString().Substring(argPos) + "'\n"
-                    + "Reason: " + result.ErrorReason.ToString()
+                Description = "Command failed: '" + message  + "'\n"
+                    + "Reason: " + reason
             };
 
             //  Send errors via direct-message to the user
