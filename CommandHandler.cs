@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using YADB.Common;
@@ -29,6 +30,9 @@ namespace YADB
             await _cmds.AddModuleAsync<ModeratorModule>();
 
             _client.MessageReceived += HandleCommandAsync;               // Register the messagereceived event to handle commands.
+
+            //  Register the user-joined event
+            _client.UserJoined += AsyncUserJoined;
 
             //  Patrick
             _client.Ready += IntroductionAsync;
@@ -105,6 +109,41 @@ namespace YADB
             var dmchannel = await context.User.GetOrCreateDMChannelAsync();
             await dmchannel.SendMessageAsync("", false, builder.Build());
         }
+     
+        /// <summary>
+        /// 2017-8-19
+        /// </summary>
+        /// <param name="user">The user that just joined</param>
+        public static async Task AsyncUserJoined(SocketGuildUser user)
+        {
+            await Program.AsyncConsoleMessage("User (" + user.Username + ") joined channel", ConsoleColor.Cyan);
+            var userChannel = GetUserChannel(user);
+            string greeting;
+            await Services.Chat.GetReply(Constants.Greetings.Random(), out greeting);
+            await userChannel.SendMessageAsync(user.Username + ", " + greeting);
+        }
+
+        /// <summary>
+        /// 2017-8-19
+        /// Returns the current channel the user is on.
+        /// Returns null if the user is in a PM channel.
+        /// </summary>
+        /// <param name="user">A user object</param>
+        private static ITextChannel GetUserChannel(SocketGuildUser user)
+        {
+            ///  Users login to Discord and are at the Direct-Message screen
+            ///  This fires when the user selects a server or "guild."
+
+            //  Guilds and servers are the same thing
+            //  Ref: https://discordapp.com/developers/docs/resources/guild
+
+            //  When the user connects to the Guild, the user returns
+            //  to whatever channel they were in most recently.
+
+            SocketTextChannel defaultChannel = user.Guild.DefaultChannel;
+
+            return defaultChannel;
+        }
 
         private async Task IntroductionAsync()
         {
@@ -130,5 +169,7 @@ namespace YADB
 
             await Services.Chat.EnableChat(true);
         }
+
+
     }
 }
