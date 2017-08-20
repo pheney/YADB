@@ -76,6 +76,7 @@ namespace YADB.Services
         static string key = "kv85jCC3ypppmqcLrWHip1cdFZrloGIQ";
         static string de = "5";
         static bool chatEnabled = true;
+        static DateTime lastMessageReceived;
 
         public static bool ChatStatus { get { return chatEnabled; } }
 
@@ -89,8 +90,8 @@ namespace YADB.Services
             Chat.chatEnabled = enabled;
             return Task.CompletedTask;
         }
-        
-        public static async Task Reply(ICommandContext context, string message)
+
+        public static async Task Reply(ICommandContext context, string message, bool addressUser = true)
         {
             if (!chatEnabled) return;
 
@@ -106,7 +107,7 @@ namespace YADB.Services
             //long elapsed = s.ElapsedMilliseconds;
             //int waitDelay = 500 * (Constants.rnd.Next(6) + 1) - (int)elapsed;
             //await Task.Delay(Math.Min(0,waitDelay));
-            await context.Channel.SendMessageAsync(userName +", " +response);                        
+            await context.Channel.SendMessageAsync((addressUser?userName +", ":"") +response);                        
             await StoreConversationToken(csFile, cs);
         }
 
@@ -166,7 +167,19 @@ namespace YADB.Services
                 //503: too many requests from a single IP address or API key
                 response = "There are " + e.Status + " reasons for me not to respond to that.";
             }
+            lastMessageReceived = DateTime.Now;
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Returns the time span since the last message received.
+        /// </summary>
+        public static TimeSpan LastMessageInterval
+        {
+            get
+            {
+                return DateTime.Now - lastMessageReceived;                
+            }
         }
 
         /// <summary>

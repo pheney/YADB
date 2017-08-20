@@ -28,16 +28,26 @@ namespace YADB.Modules
         [Command("#SetDelay"), Alias("#sd")]
         [Remarks("Set the mininum and maximum delay (in minutes) for the attract message")]
         [MinPermissions(AccessLevel.BotOwner)]
-        public async Task SetAttractDelay(float min, float max)
+        public async Task SetAttractDelay(params float[] delay)
         {
-            //  handle all the stupid requests
+            //  When no parameters exist, just show current status
+            if (delay.Length<2)
+            {
+                await ReportAttractDelay();
+                return;
+            }
+
+            float min = delay[0];
+            float max = delay[1];
+
+            //  handle all the stupid delay values
             string message, details;
-            
+
             //  negative values
-            if (min < 0 || max < 0)
+            if (min < 1 || max < 1)
             {
                 message = "Delay Change Failed";
-                details = "Details: values must be greater than zero.";
+                details = "Details: values must be greater than one.";
                 await PMReportIssueAsync(message, details, MessageSeverity.CriticalOrFailure);
                 return;
             }
@@ -51,25 +61,14 @@ namespace YADB.Modules
                 return;
             }
 
-            //  very short minimum value
-            if (min < 3f/60)
-            {
-                message = "Delay Change Failed";
-                details = "Details: minimum value must be greater than 0.05 (3 seconds)";
-                await PMReportIssueAsync(message, details, MessageSeverity.CriticalOrFailure);
-                return;
-            }
-
             //  update the values
-            PuppetModule.attractDelayMin = min;
-            PuppetModule.attractDelayMax = max;
+            PuppetModule.attractDelayMin = (float)min;
+            PuppetModule.attractDelayMax = (float)max;
+            
             await ReportAttractDelay();
         }
 
-        [Command("#SetDelay"), Alias("#sd")]
-        [Remarks("Show the current mininum and maximum delay (in minutes) for the attract message")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task ReportAttractDelay()
+        private async Task ReportAttractDelay()
         {
             string message = "Delay set: {min} - {max} (minutes)";
             message = message
@@ -81,6 +80,7 @@ namespace YADB.Modules
         }
         
         private static bool attractEnabled;
+        private static Thread attractThread;
 
         /// <summary>
         /// 2017-8-19
@@ -89,51 +89,84 @@ namespace YADB.Modules
         [Command("#EnableAttract"), Alias("#Ea")]
         [Remarks("Enable / disable unprompted bot conversation starters")]
         [MinPermissions(AccessLevel.BotOwner)]
-        public async Task EnableAttractMode(bool enabled)
+        public async Task EnableAttractMode([Remainder]string enabled = null)
         {
-            //  do nothing if the setting was not changed
-            if (attractEnabled == enabled)
-            {
-                await ReportAttractstatus();
-                return;
-            }
-            //  update the setting
-            attractEnabled = enabled;
-            await ReportAttractstatus();
+            bool result, status;
+            result = bool.TryParse(enabled, out status);
 
-            Thread attractThread = new Thread(AttractLoop);
-            attractThread.Start();
+            if (result)
+            {
+                //  Before doing anything at all, ensure CHAT is enabled
+                if (status && !Chat.ChatStatus)
+                {
+                    string message = "There is no point to enable AttractMode when "
+                        +"chat is disabled. Enable chat first.";
+                    await PMFeedbackAsync(message, MessageSeverity.Warning);
+                    return;
+                }
+
+                //  Do nothing when the setting is not changed
+                if (attractEnabled != status)
+                {
+                    //  Change the status
+                    attractEnabled = status;
+                    if (attractEnabled)
+                    {
+                        //  Start loop thread
+                        attractThread = new Thread(async () => await AttractLoop());
+                        attractThread.Start();
+                    }
+                    await AttractStatus(true);
+                    return;
+                }
+            }
+
+            //  show current status
+            await AttractStatus(false);
         }
 
-        [Command("#EnableAttract"), Alias("#Ea")]
-        [Remarks("Enable / disable unprompted bot conversation starters")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task ReportAttractstatus()
+        /// <summary>
+        /// By default, displays color as "success" when active,
+        /// and "failure" when disabled.
+        /// </summary>
+        /// <param name="changed">Use true to set color as "Info"</param>
+        private async Task AttractStatus(bool changed = true)
         {
             //  Send feedback message to user
+            string message = "Attract status: {status}";
+            message = message.Replace("{status}", attractEnabled ? "enabled" : "disabled");
+
+            string details = "Delay: {min} - {max} minutes";
+            details = details
+                .Replace("{min}", attractDelayMin.ToString())
+                .Replace("{max}", attractDelayMax.ToString());
+            
+            //  when active, show how long it's been since the last message exchange
             if (attractEnabled)
             {
-                string message = "Attract enabled.";
-                string details = "Delay: {min} - {max} (minutes)";
-                details = details
-                    .Replace("{min}", PuppetModule.attractDelayMin.ToString())
-                    .Replace("{max}", PuppetModule.attractDelayMax.ToString());
-                await PMReportIssueAsync(message, details, MessageSeverity.Success);
+                details += "\nLast exchange: ~{min} min ago";
+                details = details.Replace("{min}", string.Format("{0:N2}", Chat.LastMessageInterval.TotalMinutes));
+            }
 
-                if (!Chat.ChatStatus) await ReportChatStatus();
-            }
-            else
-            {
-                await PMFeedbackAsync("Attract disabled", MessageSeverity.CriticalOrFailure);
-            }
+            MessageSeverity severity = attractEnabled ? MessageSeverity.Success : MessageSeverity.CriticalOrFailure;
+            if (!changed) severity = MessageSeverity.Info;
+
+            await PMReportIssueAsync(message, details, severity);
         }
 
-        private void AttractLoop() { 
+        /// <summary>
+        /// 2017-8-20
+        /// Used on a separate Thread.
+        /// </summary>
+        private async Task AttractLoop() { 
             while (attractEnabled && Chat.ChatStatus)
             {
-                int delayMillis = (int)(Constants.rnd.Range(attractDelayMin, attractDelayMax) * 60 * 1000);
-                Task.Delay(delayMillis);
-                StartConvo();
+                int delayMillis = (int)(Constants.rnd.Range(attractDelayMin, attractDelayMax) * 60 * 1000);                
+                await Task.Delay(delayMillis);
+
+                //  When the last message exchanged exceeds
+                //  the 'delay' period, then prompt for a conversation.
+                if (Chat.LastMessageInterval.TotalMilliseconds> delayMillis) await StartConvo();
             }
         }
 
@@ -143,31 +176,31 @@ namespace YADB.Modules
         [Command("#EnableChat"), Alias("#Ec")]
         [Remarks("Enable / disable bot conversation")]
         [MinPermissions(AccessLevel.BotOwner)]
-        public async Task EnableChat(bool enabled)
+        public async Task EnableChat([Remainder]string enabled = null)
         {
-            await Chat.EnableChat(enabled);
+            bool result, status;
+            result = bool.TryParse(enabled, out status);
 
-            //  Send feedback message to user
-            await ReportChatStatus();
-
-            //  Activate attract mode
-            await EnableAttractMode(enabled);
-        }
-
-        [Command("#EnableChat"), Alias("#Ec")]
-        [Remarks("Enable / disable bot conversation")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task ReportChatStatus()
-        {
-            //  Send feedback message to user
-            if (Chat.ChatStatus)
+            if (result)
             {
-                await PMFeedbackAsync("Chat enabled: " + Chat.ChatStatus, MessageSeverity.Success);
+                await Chat.EnableChat(status);
+                await ChatStatus(true);
             }
             else
             {
-                await PMFeedbackAsync("Chat enabled: " + Chat.ChatStatus, MessageSeverity.CriticalOrFailure);
+                //  just report current status
+                await ChatStatus(false);
             }
+        }
+
+        private async Task ChatStatus(bool changed = true)
+        {
+            //  Send feedback message to user
+            string status = "Chat status: {status}";
+            status = status.Replace("{status}", Chat.ChatStatus ? "enabled" : "disabled");
+            MessageSeverity severity = Chat.ChatStatus ? MessageSeverity.Success : MessageSeverity.CriticalOrFailure;
+            if (!changed) severity = MessageSeverity.Info;
+            await PMFeedbackAsync(status, severity);
         }
 
         #endregion
@@ -266,7 +299,7 @@ namespace YADB.Modules
                 }
                 if (channelName != null)
                 {
-                    await Announce(channelName, response);
+                    await AnnounceOnChannelName(channelName, response);
                 } else
                 {
                     await ReplyAsync(response);
@@ -346,9 +379,27 @@ namespace YADB.Modules
         }
 
         [Command("#Announce"),Alias("#An", "#say", "#s")]
-        [Remarks("PM the bot to make an announcement on another channel, using channel ID")]
+        [Remarks("PM the bot to make an announcement on another channel, using channel name or channel ID")]
         [MinPermissions(AccessLevel.ServerMod)]
-        public async Task Announce(ulong channelId, [Remainder]string message)
+        public async Task Announce([Remainder]string message)
+        {
+            //  When the first word is a ulong, treat it as a channel ID.
+            //  Otherwise, treat it as a channel name.
+            string[] words = message.Split(' ');
+            ulong channelId;
+            bool parseReslt = ulong.TryParse(words[0], out channelId);
+            if (parseReslt)
+            {
+                //  Found a potential Channel ID
+                await AnnounceOnChannelId(channelId, words.JoinWith(" ", 1));
+                return;
+            }
+
+            //  assume the first word is a channel name
+            await AnnounceOnChannelName(words[0], words.JoinWith(" ", 1));
+        }
+
+        private async Task AnnounceOnChannelId(ulong channelId, [Remainder]string message)
         {
             DiscordSocketClient client = Context.Client;
             IMessageChannel messageChannel = client.GetChannel(channelId) as IMessageChannel;
@@ -384,10 +435,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#Announce"),Alias("#An", "#say", "#s")]
-        [Remarks("PM the bot to make an announcement on another channel, using channel name")]
-        [MinPermissions(AccessLevel.ServerMod)]
-        public async Task Announce(string channelName, [Remainder]string message)
+        private async Task AnnounceOnChannelName(string channelName, [Remainder]string message)
         {
             DiscordSocketClient client = Context.Client;
             IReadOnlyCollection<SocketGuildChannel> channels = client.Guilds.First().Channels;
@@ -414,7 +462,7 @@ namespace YADB.Modules
             }
             else
             {
-                await Announce(destinationChannel.Id, message);
+                await AnnounceOnChannelId(destinationChannel.Id, message);
             }
         }
 

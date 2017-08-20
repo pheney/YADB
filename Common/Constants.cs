@@ -72,5 +72,34 @@ namespace YADB.Common
         {
             return source[Constants.rnd.Next(source.Count)];
         }
+
+        /// <summary>
+        /// 2017-8-20
+        /// Takes a string array and returns a single string containing all 
+        /// the elements.
+        /// 
+        /// For example, given: string[] words = new string[] { "This" "was" "fun" }
+        /// Use words.JoinWith(" ") --> "This was fun"
+        /// use words.JoinWith(" ", 1) --> "was fun"
+        /// Use words.JoinWith(1) --> "wasfun"
+        /// use words.JoinWith(" ", endIndex:1) --> "This was"
+        /// </summary>
+        /// <param name="source">an array of strings</param>
+        /// <param name="conjunction">placed between each string</param>
+        /// <returns>The array concatenated as a single string</returns>
+        public static string JoinWith(this string[] source, string conjunction = null, int? startIndex = null, int? endIndex = null)
+        {
+            conjunction = conjunction ?? "";
+            startIndex = startIndex ?? 0;
+            endIndex = endIndex ?? source.Length;
+
+            string result = "";
+            for (int i = (int)startIndex; i < endIndex; i++)
+            {
+                result += source[i];
+                if (i < endIndex - 1) result += conjunction;
+            }
+            return result;
+        }
     }
 }

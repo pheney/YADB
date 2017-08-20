@@ -16,19 +16,25 @@ namespace YADB.Modules
             _service = service;
         }
 
+        /// <summary>
+        /// 2017-8-20
+        /// Display a menu of commands the bot understands.
+        /// This display is PM'd to the user.
+        /// The user is sent a message in their channel notifying them of the PM.
+        /// </summary>
         [Command("#help"), Alias("help", "#h")]
-        public async Task HelpAsync(string command = null)
+        public async Task HelpMenuAsync([Remainder]string command=null)
         {
-            if (command != null)
+            if (!string.IsNullOrWhiteSpace(command))
             {
-                await CommandHelpAsync(command);
+                await HelpCommandAsync(command);
                 return;
             }
 
             var builder = new EmbedBuilder()
             {
                 Color = Constants.SlateBlue,
-                Description = "These are the commands you can say to me."
+                Description = "These are the commands I understand."
             };
 
             foreach (var module in _service.Modules)
@@ -60,15 +66,19 @@ namespace YADB.Modules
                 x.IsInline = false;
             });
 
-            //  Direct the user to look at their direct-messages
-            await Context.Channel.SendMessageAsync("I PM'd you some help.");
+            //  When this is a DM channel, direct the user 
+            //  to look at their direct-messages.
+            if ((Context.Channel as IDMChannel) == null)
+            {
+                await Context.Channel.SendMessageAsync("I PM'd you some help.");
+            }
 
             //  Send help via direct-message to the user            
             var dmchannel = await Context.User.GetOrCreateDMChannelAsync();
             await dmchannel.SendMessageAsync("", false, builder.Build());
         }
 
-        private async Task CommandHelpAsync(string command)
+        private async Task HelpCommandAsync(string command)
         {
             var result = _service.Search(Context, command);
             IDMChannel dmchannel;
