@@ -3,6 +3,7 @@ using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
+using YADB.Common;
 
 namespace YADB
 {
@@ -47,6 +48,9 @@ namespace YADB
             //  Register the console log event using a custom console writer
             _client.Log += (l) => AsyncConsoleLog(l);
 
+            //  Register the user-joined event
+            //_client.UserJoined += (u) => AsyncUserJoined(u);
+
             //  Basic console log output
             //_client.Log += (l) => Console.Out.WriteLineAsync(l.ToString());
             
@@ -65,7 +69,6 @@ namespace YADB
         /// <summary>
         /// 2017-8-17
         /// </summary>
-        /// <param name="logMessage"></param>
         private async Task AsyncConsoleLog(LogMessage logMessage)
         {
             //  default console color
@@ -74,12 +77,10 @@ namespace YADB
             switch (logMessage.Severity)
             {
                 case LogSeverity.Critical:
+                case LogSeverity.Error:
                     fg = ConsoleColor.Red;
                     break;
-                case LogSeverity.Debug:
-                    fg = ConsoleColor.Magenta;
-                    break;
-                case LogSeverity.Error:
+                case LogSeverity.Warning:
                     fg = ConsoleColor.Yellow;
                     break;
                 case LogSeverity.Info:
@@ -88,8 +89,8 @@ namespace YADB
                 case LogSeverity.Verbose:
                     fg = ConsoleColor.Gray;
                     break;
-                case LogSeverity.Warning:
-                    fg = ConsoleColor.Green;
+                case LogSeverity.Debug:
+                    fg = ConsoleColor.Cyan;
                     break;
                 default:
                     //  do nothing
@@ -124,6 +125,41 @@ namespace YADB
             //  restore original colors
             Console.ForegroundColor = ofg;
             Console.BackgroundColor = obg;
+        }
+
+        /// <summary>
+        /// 2017-8-19
+        /// </summary>
+        /// <param name="user">The user that just joined</param>
+        public static async Task AsyncUserJoined(SocketGuildUser user)
+        {
+            await AsyncConsoleMessage("User (" + user.Username + ") joined channel", ConsoleColor.Cyan);
+            var userChannel = GetUserChannel(user);
+            string greeting;
+            await Services.Chat.GetReply(Constants.Greetings.Random(), out greeting);
+            await userChannel.SendMessageAsync(user.Username+", " + greeting);
+        }
+
+        /// <summary>
+        /// 2017-8-19
+        /// Returns the current channel the user is on.
+        /// Returns null if the user is in a PM channel.
+        /// </summary>
+        /// <param name="user">A user object</param>
+        private static ITextChannel GetUserChannel(SocketGuildUser user)
+        {
+            ///  Users login to Discord and are at the Direct-Message screen
+            ///  This fires when the user selects a server or "guild."
+            
+            //  Guilds and servers are the same thing
+            //  Ref: https://discordapp.com/developers/docs/resources/guild
+
+            //  When the user connects to the Guild, the user returns
+            //  to whatever channel they were in most recently.
+
+            SocketTextChannel defaultChannel = user.Guild.DefaultChannel;
+
+            return defaultChannel;
         }
     }
 }

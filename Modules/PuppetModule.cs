@@ -345,7 +345,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#Announce"),Alias("#An")]
+        [Command("#Announce"),Alias("#An", "#say", "#s")]
         [Remarks("PM the bot to make an announcement on another channel, using channel ID")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Announce(ulong channelId, [Remainder]string message)
@@ -384,7 +384,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#Announce"),Alias("#An")]
+        [Command("#Announce"),Alias("#An", "#say", "#s")]
         [Remarks("PM the bot to make an announcement on another channel, using channel name")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Announce(string channelName, [Remainder]string message)
