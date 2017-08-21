@@ -30,6 +30,7 @@ namespace YADB
             await _cmds.AddModuleAsync<PuppetModule>();
             await _cmds.AddModuleAsync<HelpModule>();
             await _cmds.AddModuleAsync<ModeratorModule>();
+            await _cmds.AddModuleAsync<CleanModule>();
 
             _client.MessageReceived += HandleCommandAsync;               // Register the messagereceived event to handle commands.
 
@@ -37,7 +38,7 @@ namespace YADB
             _client.UserJoined += AsyncUserJoined;
 
             //  Patrick
-            _client.Ready += IntroductionAsync;
+            //_client.Ready += IntroductionAsync;
         }
 
         /// <summary>
@@ -93,38 +94,72 @@ namespace YADB
             //  NO Prefix, sub-command prefix --> user fumbled bot prefix, offer help
             //  NO Prefix, NO sub-command prefix --> not a message to the bot
 
-            //  Check if the message has any of the string prefixes
+            #region Check for commandPrefix, e.g., "!"
+            //  Check if the message has any of the command prefixes
+
             int argPos = 0;
-            bool hasStringPrefix = false;
+            bool hasCommandPrefix = false;
             foreach (string prefix in Configuration.Load().Prefix)
             {
-                hasStringPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
+                hasCommandPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
             }
 
+            #endregion
+            #region Check for UsernamePrefix, e.g., "Pqq"
+            //  Check if the message has bot's username prefix
+
+            string[] usernamePrefix = new string[] {
+                context.Guild.CurrentUser.Username,
+                context.Guild.CurrentUser.Username + " ",
+                context.Guild.CurrentUser.Username + ",",
+                context.Guild.CurrentUser.Username + ", ",
+            };
+
+            bool hasUsernamePrefix = false;
+            foreach (string prefix in usernamePrefix)
+            {
+                hasUsernamePrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
+            }
+
+            #endregion
+            #region Check for Mention prefix, e.g., "@Username"
             //  Check if the message has a mention prefix
+
             bool hasMentionPrefix = msg.HasMentionPrefix(_client.CurrentUser, ref argPos);
 
+            #endregion
+            #region Check for Nickname prefix, e.g., "nickname"
             //  Check if the message has bot's nickname prefix
+            
             string[] nickPrefix = new string[] {
                 context.Guild.CurrentUser.Nickname,
                 context.Guild.CurrentUser.Nickname + " ",
                 context.Guild.CurrentUser.Nickname + ",",
+                context.Guild.CurrentUser.Nickname + ", ",
             };
             bool hasNickPrefix = false;
             foreach (string prefix in nickPrefix)
             {
                 hasNickPrefix|= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
-            }            
+            }
 
-            //  Do nothing if there is no prefix to get the bot's attention
-            if (!hasStringPrefix && !hasMentionPrefix && !hasNickPrefix) return;
+            #endregion
 
-            // Try and execute a command with the given context.
+            //  In a public channel, when there is no prefix to get the bot's
+            //  attention, do nothing.
+            if (!hasCommandPrefix 
+                && !hasUsernamePrefix 
+                && !hasMentionPrefix 
+                && !hasNickPrefix) return;
+                        
+            //  Attempt to parts whatever was said to the bot as a command
             var result = await _cmds.ExecuteAsync(context, argPos);
 
+            //  When parsing is successful, that means the bot received a command
+            //  and was able to execute it. So we exit.
             if (result.IsSuccess) return;
 
-            // When execution fails, try different responses
+            // When command-parsing fails, try different responses
             switch (result.Error)
             {
                 case CommandError.UnknownCommand:

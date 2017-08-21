@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace YADB.Modules
 {
-    [Group("clean"), Name("Clean")]
+    [Group("Clean"), Name("#Clean")]
     [RequireContext(ContextType.Guild)]
     [Summary("Clean messages from a channel.")]
     public class CleanModule : ModuleBase<SocketCommandContext>

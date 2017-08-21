@@ -11,7 +11,8 @@ namespace YADB.Modules
     {
         private CommandService _service;
 
-        public HelpModule(CommandService service)           // Create a constructor for the commandservice dependency
+        //  Constructor
+        public HelpModule(CommandService service)           
         {
             _service = service;
         }
@@ -34,7 +35,7 @@ namespace YADB.Modules
             var builder = new EmbedBuilder()
             {
                 Color = Constants.SlateBlue,
-                Description = "These are the commands I understand."
+                Description = "These are the commands I can execute on the channel where you requested help."
             };
 
             foreach (var module in _service.Modules)
