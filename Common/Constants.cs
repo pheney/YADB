@@ -85,13 +85,13 @@ namespace YADB.Common
         // {s}
         private static string[] FancySymbols = new string[]
         {
-            "x","X", "o", "O", ".", ":", "~", "<",">","=", "-","_"
+            "x","X", "o", "O", ".", ":", "~", "<>","><","=", "-","_","/\\","\\/","|"
         };
 
         // {j}
         private static string[] FancyJoiner = new string[]
         {
-            " ", "-", "=", "_", "*", "~"
+            ".", "-", "=", "_", "*", "~", ":"
         };
         
         /// <summary>
@@ -206,7 +206,7 @@ namespace YADB.Common
         {
             conjunction = conjunction ?? "";
             startIndex = startIndex ?? 0;
-            endIndex = endIndex ?? source.Length;
+            endIndex = endIndex == null ? source.Length : Math.Min((int)endIndex + 1, source.Length);
 
             string result = "";
             for (int i = (int)startIndex; i < endIndex; i++)

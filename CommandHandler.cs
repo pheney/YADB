@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using YADB.Common;
@@ -89,6 +90,11 @@ namespace YADB
         /// </summary>
         private async Task HandlePublicCommandAsync(SocketCommandContext context, SocketUserMessage msg)
         {
+            //  Ignore messages from ourself
+            ulong authorId = context.User.Id;
+            ulong userId = _client.CurrentUser.Id;
+            if (authorId == userId) return;
+
             //  Prefix, NO sub-command prefix --> user chatting with bot
             //  Prefix, sub-commad prefix --> user command bot to execute command
             //  NO Prefix, sub-command prefix --> user fumbled bot prefix, offer help
@@ -108,11 +114,9 @@ namespace YADB
             #region Check for UsernamePrefix, e.g., "Pqq"
             //  Check if the message has bot's username prefix
 
+            string username = context.Guild.CurrentUser.Username;
             string[] usernamePrefix = new string[] {
-                context.Guild.CurrentUser.Username,
-                context.Guild.CurrentUser.Username + " ",
-                context.Guild.CurrentUser.Username + ",",
-                context.Guild.CurrentUser.Username + ", ",
+                username,                username + " ",                username + ",",                username + ", "
             };
 
             bool hasUsernamePrefix = false;
@@ -130,12 +134,10 @@ namespace YADB
             #endregion
             #region Check for Nickname prefix, e.g., "nickname"
             //  Check if the message has bot's nickname prefix
-            
+
+            string nickname = context.Guild.CurrentUser.Nickname;
             string[] nickPrefix = new string[] {
-                context.Guild.CurrentUser.Nickname,
-                context.Guild.CurrentUser.Nickname + " ",
-                context.Guild.CurrentUser.Nickname + ",",
-                context.Guild.CurrentUser.Nickname + ", ",
+                nickname,                nickname + " ",                nickname + ",",                nickname + ", "
             };
             bool hasNickPrefix = false;
             foreach (string prefix in nickPrefix)
@@ -198,28 +200,70 @@ namespace YADB
         private async Task HandleDMCommandAsync(SocketCommandContext context, SocketUserMessage msg)
         {
             //  Ignore messages from ourself
-            string messageAuthor = context.User.Username;
-            string currentUser = _client.CurrentUser.Username;
-            if (messageAuthor.Equals(currentUser, StringComparison.OrdinalIgnoreCase)) return;
-            
-            //  Prefix found --> process as if it was a public message, HandlePublicCommandAsync()
-            //  Sub-command prefix found --> process bot command
-            //  No sub-command prefix --> user chatting with bot
+            ulong authorId = context.User.Id;
+            ulong userId = _client.CurrentUser.Id;
+            if (authorId==userId) return;
 
-            //  Check if the message has any of the string prefixes
+            #region Check for commandPrefix, e.g., "!"
+            //  Check if the message has any of the command prefixes
+
             int argPos = 0;
-            bool hasStringPrefix = false;
+            bool hasCommandPrefix = false;
             foreach (string prefix in Configuration.Load().Prefix)
             {
-                hasStringPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
+                hasCommandPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
             }
 
+            #endregion
+            #region Check for Username Prefix, e.g., "Pqq"
+            //  Check if the message has bot's username prefix
+
+            string username = _client.CurrentUser.Username;
+            string[] usernamePrefix = new string[] {
+                username,                username + " ",                username + ",",                username + ", "
+            };
+
+            bool hasUsernamePrefix = false;
+            foreach (string prefix in usernamePrefix)
+            {
+                hasUsernamePrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
+            }
+
+            #endregion
+            #region Check for Mention prefix, e.g., "@Username"
             //  Check if the message has a mention prefix
+
             bool hasMentionPrefix = msg.HasMentionPrefix(_client.CurrentUser, ref argPos);
 
-            //  When the prefix is used in a DM with the bot, 
-            //  inform the user this is not necessary.
-            if (hasStringPrefix || hasMentionPrefix)
+            #endregion
+            #region Check for Nickname prefix, e.g., "nickname"
+            //  Nicknames are server/guild specific.
+            //  In order to check nicknames, every server needs to be iterated.
+
+            bool hasNickPrefix = false;
+            string[] nickPrefix = new string[] { "", " ", ",", ", " };
+            List<SocketGuild> guilds = context.Client.Guilds.ToList();
+            foreach (SocketGuild guild in guilds)
+            {
+                SocketGuildUser guildUser = guild.GetUser(userId);
+                string nickname = guildUser.Nickname;
+                if (string.IsNullOrWhiteSpace(nickname)) continue;
+
+                foreach (string np in nickPrefix)
+                {
+                    string nicknamePrefix = nickname + np;
+                    hasNickPrefix |= msg.HasStringPrefix(nicknamePrefix, ref argPos, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            #endregion
+            
+            //  In a private DM channel, when there IS a prefix to get the bot's
+            //  attention, inform the user not to use it.
+            if (hasCommandPrefix
+                || hasUsernamePrefix
+                || hasMentionPrefix
+                || hasNickPrefix)
             {
                 string message = "There is no need to directly address me in a DM channel. "
                     + "It is only us; I know who you are talking to.";
@@ -229,16 +273,19 @@ namespace YADB
                 return;
             }
 
-            // Try and execute a command with the given context.
+            //  First, assume user has entered a command.
+            //  Try and execute the user input as a command with the given context.
             var result = await _cmds.ExecuteAsync(context, argPos);
 
+            //  When successful, this means the user entered a valid command and
+            //  the bot was able to execute it. No further processing is required.
             if (result.IsSuccess) return;
-
+            
             // When execution fails, try different responses
             switch (result.Error)
             {
                 case CommandError.UnknownCommand:
-                    //  distinguish between chatting and fumbled #commands
+                    //  Distinguish between chatting and fumbled #commands
                     bool hasSubprefix = false;
                     foreach (string subprefix in Configuration.Load().SubPrefix)
                     {
@@ -249,7 +296,7 @@ namespace YADB
                     {
                         //  fumbled #command
                         string[] words = msg.Content.Split(' ');
-                        await ErrorAsync(context, words[0], "typo?");
+                        await ErrorAsync(context, words.JoinWith(" ",0,1), "typo?");
                     }
                     else
                     {

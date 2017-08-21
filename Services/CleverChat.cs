@@ -96,13 +96,32 @@ namespace YADB.Services
         {
             if (!chatEnabled) return;
 
+            //  get the conversation history
             await LoadConversationToken(csFile);
+
+            //  get the response to the user's message
             string response;
             await GetReply(message, out response);
+
+            //  name and user id for the person talking to the bot
+            string userName = context.User.Username;
             var id = context.User.Id;
-            SocketGuildUser guildUser = await context.Guild.GetUserAsync(id) as SocketGuildUser;
-            string userName = guildUser != null ? guildUser.Nickname : context.User.Username;
-            await context.Channel.SendMessageAsync((addressUser ? userName + ", " : "") + response);
+
+            //  Determine the channel to send the reply.
+            ISocketMessageChannel messageChannel = context.Channel as ISocketMessageChannel;
+            
+            //  Public channel conversation should be addressed back to the user,
+            //  using their nickname in the guild / server.
+            SocketGuild guild = context.Guild as SocketGuild;
+            
+            if (guild != null)
+            {
+                SocketGuildUser guildUser = guild.GetUser(id);
+                string nickname = guildUser.Nickname;
+                if (!string.IsNullOrWhiteSpace(nickname)) userName = nickname;
+            }            
+
+            await messageChannel.SendMessageAsync((addressUser ? userName + ", " : "") + response);
             await StoreConversationToken(csFile, cs);
         }
 

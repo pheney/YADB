@@ -19,6 +19,18 @@ namespace YADB.Modules
     [RequireContext(ContextType.DM)]
     public class PuppetModule : ModuleBase<SocketCommandContext>
     {
+        #region Status report
+
+        [Command("#Status"), Alias("#s")]
+        [Remarks("Report the current state for chat and attract functions")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task StatusReport()
+        {
+            await ChatStatus(false);
+            await AttractStatus(false);
+        }
+
+        #endregion
         #region Attract mode / autonomous start conversation mode
 
         //  minutes
@@ -31,7 +43,7 @@ namespace YADB.Modules
         public async Task SetAttractDelay(params float[] delay)
         {
             //  When no parameters exist, just show current status
-            if (delay.Length<2)
+            if (delay.Length < 2)
             {
                 await ReportAttractDelay(false);
                 return;
@@ -64,7 +76,7 @@ namespace YADB.Modules
             //  update the values
             PuppetModule.attractDelayMin = (float)min;
             PuppetModule.attractDelayMax = (float)max;
-            
+
             await ReportAttractDelay();
         }
 
@@ -79,7 +91,7 @@ namespace YADB.Modules
             if (!changed) severity = MessageSeverity.Info;
             await PMReportIssueAsync(message, details, severity);
         }
-        
+
         private static bool attractEnabled;
         private static Thread attractThread;
 
@@ -101,7 +113,7 @@ namespace YADB.Modules
                 if (status && !Chat.ChatStatus)
                 {
                     string message = "There is no point to enable AttractMode when "
-                        +"chat is disabled. Enable chat first.";
+                        + "chat is disabled. Enable chat first.";
                     await PMFeedbackAsync(message, MessageSeverity.Warning);
                     return;
                 }
@@ -141,7 +153,7 @@ namespace YADB.Modules
             details = details
                 .Replace("{min}", attractDelayMin.ToString())
                 .Replace("{max}", attractDelayMax.ToString());
-            
+
             //  when active, show how long it's been since the last message exchange
             if (attractEnabled)
             {
@@ -159,10 +171,11 @@ namespace YADB.Modules
         /// 2017-8-20
         /// Used on a separate Thread.
         /// </summary>
-        private async Task AttractLoop() { 
+        private async Task AttractLoop()
+        {
             while (attractEnabled && Chat.ChatStatus)
             {
-                int delayMillis = (int)(Constants.rnd.Range(attractDelayMin, attractDelayMax) * 60 * 1000);                
+                int delayMillis = (int)(Constants.rnd.Range(attractDelayMin, attractDelayMax) * 60 * 1000);
                 await Task.Delay(delayMillis);
 
                 //  When the last message exchanged exceeds
@@ -172,9 +185,17 @@ namespace YADB.Modules
                     if (rnd.NextDouble() < 0.1f)
                     {
                         //  change nickname
-                        ulong userId = Context.Client.CurrentUser.Id;
-                        string nickname = Context.Guild.GetUser(userId).Nickname;
-                        await Context.Channel.SendMessageAsync(nickname + ", " + "#nick");
+                        SocketSelfUser bot = Context.Client.CurrentUser;
+                        ulong botId = bot.Id;
+                        SocketGuild guild = Context.Client.Guilds.First();
+                        SocketGuildUser botUser = guild.GetUser(botId);                        
+                        string nickname = botUser.Nickname;
+
+                        //  get the main channel of the guild
+                        SocketGuildChannel guildChannel = guild.GetChannel(guild.Id);
+                        ITextChannel textChannel = guildChannel as ITextChannel;
+
+                        await textChannel.SendMessageAsync(nickname + ", #botnick");
                     }
                     else
                     {
@@ -225,7 +246,7 @@ namespace YADB.Modules
         /// 2017-8-18
         /// Always PMs to the current user.
         /// </summary>
-        private async Task PMFeedbackAsync (string info, MessageSeverity severity = MessageSeverity.Info)
+        private async Task PMFeedbackAsync(string info, MessageSeverity severity = MessageSeverity.Info)
         {
             var builder = new EmbedBuilder()
             {
@@ -279,7 +300,7 @@ namespace YADB.Modules
         private SocketGuildUser GetRandomActiveUser(SocketGuild guild)
         {
             SocketGuildChannel mainChannel = GetTextChannels(guild).First();
-            IReadOnlyCollection<SocketGuildUser> userList = mainChannel.Users;
+            IReadOnlyCollection<SocketGuildUser> userList = mainChannel.Users.Where(x => x.Status.Equals(UserStatus.Online)).ToList();
             int count = userList.Count();
             int index = Constants.rnd.Next(count);
             return userList.ElementAt(index);
@@ -315,7 +336,8 @@ namespace YADB.Modules
                 if (channelName != null)
                 {
                     await AnnounceOnChannelName(channelName, response);
-                } else
+                }
+                else
                 {
                     await ReplyAsync(response);
                 }
@@ -323,14 +345,14 @@ namespace YADB.Modules
             catch (WebException e)
             {
                 response = "There was a problem with the inspirobot request.\n"
-                    +"\nException Thrown: " + e.Status.ToString();
-                string details = "Message: " +e.Message;
+                    + "\nException Thrown: " + e.Status.ToString();
+                string details = "Message: " + e.Message;
                 await PMReportIssueAsync(response, details, MessageSeverity.CriticalOrFailure);
             }
         }
 
         #endregion
-        #region Puppet / Announcements
+        #region Start Conversation
 
         [Command("#StartConvo"), Alias("#sc")]
         [Remarks("Prompt bot to start a conversation")]
@@ -341,21 +363,36 @@ namespace YADB.Modules
             if (userName == null)
             {
                 DiscordSocketClient client = Context.Client;
+
+                //  Get the bot user ID
                 SocketGuild mainGuild = client.Guilds.First();
-                string myUsername = Context.User.Username;
-                string myNickname = (Context.User as SocketGuildUser).Nickname;
-                string myMention = Context.User.Mention;
-                do
+                ulong myUserId = client.CurrentUser.Id;
+                SocketGuildUser botUser = mainGuild.GetUser(myUserId);
+
+                //  Holder for the randomly selected user
+                SocketGuildUser selectedUser = botUser;
+
+                //  Limit the number of attempts to get a random user.
+                //  Re-select when the selected user is the bot itself.
+                int maxAttempts = 10;
+                for (int i = 0; i < maxAttempts; i++)
                 {
-                    SocketGuildUser user = GetRandomActiveUser(mainGuild);
-                    userName = Constants.rnd.NextDouble() < 0.5d ? user.Username : user.Mention;
-                } while (userName.Equals(myUsername, StringComparison.OrdinalIgnoreCase)
-                        || userName.Equals(myMention, StringComparison.OrdinalIgnoreCase)
-                        || userName.Equals(myNickname, StringComparison.OrdinalIgnoreCase));
-                await StartConvo(userName);
+                    selectedUser = GetRandomActiveUser(mainGuild);
+                    if (selectedUser.Id != botUser.Id) break;
+                };
+
+                if (selectedUser.Id == botUser.Id)
+                {
+                    await PMFeedbackAsync("Nobody found to converse with.", MessageSeverity.CriticalOrFailure);
+                }
+                else
+                {
+                    string name = string.IsNullOrWhiteSpace(selectedUser.Nickname) ? selectedUser.Username : selectedUser.Nickname;
+                    await StartConvo(name);
+                }
                 return;
             }
-            
+
             string response;
             await Chat.GetReply(Constants.Greetings.Random(), out response);
 
@@ -395,7 +432,10 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#Announce"),Alias("#An", "#say", "#s")]
+        #endregion
+        #region Puppet / Announcements
+
+        [Command("#Announce"), Alias("#An", "#a", "#say")]
         [Remarks("PM the bot to make an announcement on another channel, using channel name or channel ID")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Announce([Remainder]string message)
