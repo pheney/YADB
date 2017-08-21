@@ -167,7 +167,21 @@ namespace YADB.Modules
 
                 //  When the last message exchanged exceeds
                 //  the 'delay' period, then prompt for a conversation.
-                if (Chat.LastMessageInterval.TotalMilliseconds> delayMillis) await StartConvo();
+                if (Chat.LastMessageInterval.TotalMilliseconds > delayMillis)
+                {
+                    if (rnd.NextDouble() < 0.1f)
+                    {
+                        //  change nickname
+                        ulong userId = Context.Client.CurrentUser.Id;
+                        string nickname = Context.Guild.GetUser(userId).Nickname;
+                        await Context.Channel.SendMessageAsync(nickname + ", " + "#nick");
+                    }
+                    else
+                    {
+                        //  try to start a conversation with someone
+                        await StartConvo();
+                    }
+                }
             }
         }
 
@@ -329,13 +343,15 @@ namespace YADB.Modules
                 DiscordSocketClient client = Context.Client;
                 SocketGuild mainGuild = client.Guilds.First();
                 string myUsername = Context.User.Username;
+                string myNickname = (Context.User as SocketGuildUser).Nickname;
                 string myMention = Context.User.Mention;
                 do
                 {
                     SocketGuildUser user = GetRandomActiveUser(mainGuild);
                     userName = Constants.rnd.NextDouble() < 0.5d ? user.Username : user.Mention;
                 } while (userName.Equals(myUsername, StringComparison.OrdinalIgnoreCase)
-                        || userName.Equals(myMention, StringComparison.OrdinalIgnoreCase));
+                        || userName.Equals(myMention, StringComparison.OrdinalIgnoreCase)
+                        || userName.Equals(myNickname, StringComparison.OrdinalIgnoreCase));
                 await StartConvo(userName);
                 return;
             }

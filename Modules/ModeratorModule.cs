@@ -24,7 +24,7 @@ namespace YADB.Modules
         #region
                 
         [Command("#botnick")]
-        [Remarks("Kick the specified user.")]
+        [Remarks("Tell the bot to select a new nickname.")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task BotNick()
         {
