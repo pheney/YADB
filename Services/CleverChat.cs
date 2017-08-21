@@ -1,4 +1,5 @@
 ﻿using Discord.Commands;
+using Discord.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -95,19 +96,13 @@ namespace YADB.Services
         {
             if (!chatEnabled) return;
 
-            //  stopwatch commented out
-            //  I think stopwatch is blocking the message handling thread
-            //Stopwatch s = new Stopwatch();
-            //s.Start();
             await LoadConversationToken(csFile);
             string response;
             await GetReply(message, out response);
-            string userName = context.User.Username;
-            //s.Stop();
-            //long elapsed = s.ElapsedMilliseconds;
-            //int waitDelay = 500 * (Constants.rnd.Next(6) + 1) - (int)elapsed;
-            //await Task.Delay(Math.Min(0,waitDelay));
-            await context.Channel.SendMessageAsync((addressUser?userName +", ":"") +response);                        
+            var id = context.User.Id;
+            SocketGuildUser guildUser = await context.Guild.GetUserAsync(id) as SocketGuildUser;
+            string userName = guildUser != null ? guildUser.Nickname : context.User.Username;
+            await context.Channel.SendMessageAsync((addressUser ? userName + ", " : "") + response);
             await StoreConversationToken(csFile, cs);
         }
 
@@ -178,7 +173,7 @@ namespace YADB.Services
         {
             get
             {
-                return DateTime.Now - lastMessageReceived;                
+                return DateTime.Now - lastMessageReceived;
             }
         }
 
