@@ -1,17 +1,17 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
-using YADB.Preconditions;
-using System.Threading.Tasks;
-using System.Linq;
-using Discord;
-using System.Collections.Generic;
 using System;
-using YADB.Common;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using YADB.Common;
+using YADB.Preconditions;
 using YADB.Services;
 using static YADB.Common.Constants;
-using System.Threading;
 
 namespace YADB.Modules
 {
@@ -33,7 +33,7 @@ namespace YADB.Modules
             //  When no parameters exist, just show current status
             if (delay.Length<2)
             {
-                await ReportAttractDelay();
+                await ReportAttractDelay(false);
                 return;
             }
 
@@ -68,7 +68,7 @@ namespace YADB.Modules
             await ReportAttractDelay();
         }
 
-        private async Task ReportAttractDelay()
+        private async Task ReportAttractDelay(bool changed = true)
         {
             string message = "Delay set: {min} - {max} (minutes)";
             message = message
@@ -76,6 +76,7 @@ namespace YADB.Modules
                 .Replace("{max}", PuppetModule.attractDelayMax.ToString());
             string details = "Attract status: " + (PuppetModule.attractEnabled ? "enabled." : "disabled");
             MessageSeverity severity = attractEnabled ? MessageSeverity.Success : MessageSeverity.CriticalOrFailure;
+            if (!changed) severity = MessageSeverity.Info;
             await PMReportIssueAsync(message, details, severity);
         }
         

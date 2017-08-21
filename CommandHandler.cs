@@ -88,13 +88,6 @@ namespace YADB
         /// </summary>
         private async Task HandlePublicCommandAsync(SocketCommandContext context, SocketUserMessage msg)
         {
-            //  TODO
-            //  Check for Prefix, e.g., "botname ", "botname, "
-            //  Check for sub-command prefix, e.g., "#"
-            //  Do this even if the Prefix wasn't found
-
-            ////  Results
-
             //  Prefix, NO sub-command prefix --> user chatting with bot
             //  Prefix, sub-commad prefix --> user command bot to execute command
             //  NO Prefix, sub-command prefix --> user fumbled bot prefix, offer help
@@ -111,8 +104,20 @@ namespace YADB
             //  Check if the message has a mention prefix
             bool hasMentionPrefix = msg.HasMentionPrefix(_client.CurrentUser, ref argPos);
 
+            //  Check if the message has bot's nickname prefix
+            string[] nickPrefix = new string[] {
+                context.Guild.CurrentUser.Nickname,
+                context.Guild.CurrentUser.Nickname + " ",
+                context.Guild.CurrentUser.Nickname + ",",
+            };
+            bool hasNickPrefix = false;
+            foreach (string prefix in nickPrefix)
+            {
+                hasNickPrefix|= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
+            }            
+
             //  Do nothing if there is no prefix to get the bot's attention
-            if (!hasStringPrefix && !hasMentionPrefix) return;
+            if (!hasStringPrefix && !hasMentionPrefix && !hasNickPrefix) return;
 
             // Try and execute a command with the given context.
             var result = await _cmds.ExecuteAsync(context, argPos);
@@ -161,14 +166,7 @@ namespace YADB
             string messageAuthor = context.User.Username;
             string currentUser = _client.CurrentUser.Username;
             if (messageAuthor.Equals(currentUser, StringComparison.OrdinalIgnoreCase)) return;
-
-            //  TODO
-            //  Check for Prefix, e.g., "botname ", "botname, "
-            //  Check for sub-command prefix, e.g., "#"
-            //  Do this even if the Prefix wasn't found
-
-            ////  Results
-
+            
             //  Prefix found --> process as if it was a public message, HandlePublicCommandAsync()
             //  Sub-command prefix found --> process bot command
             //  No sub-command prefix --> user chatting with bot

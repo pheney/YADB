@@ -43,6 +43,121 @@ namespace YADB.Common
             }
             return response;
         }
+
+        private static string GetLeetName(string name) {
+
+            string result = name;            
+            int substitutionCount = rnd.Next(name.Length) + 1;
+
+            for (int i = 0; i< substitutionCount; i++)
+            {
+                switch (rnd.Next(6))
+                {
+                    case 0:
+                        result = result.Replace("o", "0");
+                        break;
+                    case 1:
+                        result = result.Replace("e", "3");
+                        break;
+                    case 2:
+                        result = result.Replace("l", "1");
+                        break;
+                    case 3:
+                        result = result.Replace("s", "5");
+                        break;
+                    case 4:
+                        result = result.Replace("a", "4");
+                        break;
+                    case 5:
+                        result = result.Replace("g", "6");
+                        break;
+                }
+            }
+            return result;
+        }
+
+        private static string[] FancyNames = new string[]
+        {
+            "{name}{j}{#}", "{j}{name}{j}{be}", "{#}{j}{name}", "{?}{?}{j}{#}",
+            "{?}{#}"
+        };
+
+        // {s}
+        private static string[] FancySymbols = new string[]
+        {
+            "x","X", "o", "O", ".", ":", "~", "<",">","=", "-","_"
+        };
+
+        // {j}
+        private static string[] FancyJoiner = new string[]
+        {
+            " ", "-", "=", "_", "*", "~"
+        };
+        
+        /// <summary>
+        /// 2017-8-20
+        /// Returns a random set of book-end symbols,
+        /// e.g., << >>, xo ox, <~ ~>
+        /// </summary>
+        /// <returns></returns>
+        private static string[] GetBookends()
+        {
+            string[] result = new string[] { "", "" };
+            
+            for (int i = rnd.Next(4) + 1; i > 0; i--)
+            {
+                string symbol = FancySymbols.Random();
+                result[0] += symbol;
+                result[1] = symbol + result[1];
+            }
+
+            return result;
+        }
+
+        // {name} username
+        // {#} any number
+        // {?} any letter
+        // {be} bookend wrapper
+        // {le} leet substitution
+        public static string ToFancyName(string name)
+        {
+            string result = "";
+
+            //  get data to build a new name
+            string joiner = FancyJoiner.Random();
+            string[] bookends = GetBookends();
+            string template = FancyNames.Random();
+
+            //  do a "leet" substitution of the original name
+            if (rnd.Next(4) == 0) name = GetLeetName(name);
+            
+            //  replace the joiner symbols
+            result = template.Replace("{j}", joiner);
+
+            //  replace number symbols
+            result = result.Replace("{#}", rnd.Next(1000).ToString());
+
+            //  replace random character symbols
+            int num = rnd.Next(0, 26);
+            char letter = (char)('a' + num);
+            result = result.Replace("{?}", letter.ToString());
+
+            //  add bookends
+            bool useBookend = result.IndexOf("{be}") > -1;
+            if (useBookend)
+            {
+                //  remove bookend symbol
+                result = result.Replace("{be}", "");
+
+                //  add bookends
+                result = bookends[0] + result + bookends[1];
+            }
+
+            //  replace the name
+            result = result.Replace("{name}", name);
+
+            return result;
+        }
     }
 
     public static class Extensions
