@@ -28,8 +28,7 @@ namespace YADB
             if (!File.Exists(file))                                 // Check if the configuration file exists.
             {
                 string path = Path.GetDirectoryName(file);          // Create config directory if doesn't exist.
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
+                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
                 var config = new Configuration();                   // Create a new configuration object.
 

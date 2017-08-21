@@ -47,10 +47,7 @@ namespace YADB
 
             //  Register the console log event using a custom console writer
             _client.Log += (l) => AsyncConsoleLog(l);
-            
-            //  Basic console log output
-            //_client.Log += (l) => Console.Out.WriteLineAsync(l.ToString());
-            
+                        
             //  Connect to Discord
             await _client.LoginAsync(TokenType.Bot, Configuration.Load().Token);
             await _client.StartAsync();

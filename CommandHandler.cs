@@ -90,11 +90,6 @@ namespace YADB
         /// </summary>
         private async Task HandlePublicCommandAsync(SocketCommandContext context, SocketUserMessage msg)
         {
-            //  Ignore messages from ourself
-            ulong authorId = context.User.Id;
-            ulong userId = _client.CurrentUser.Id;
-            if (authorId == userId) return;
-
             //  Prefix, NO sub-command prefix --> user chatting with bot
             //  Prefix, sub-commad prefix --> user command bot to execute command
             //  NO Prefix, sub-command prefix --> user fumbled bot prefix, offer help
@@ -160,6 +155,15 @@ namespace YADB
             //  When parsing is successful, that means the bot received a command
             //  and was able to execute it. So we exit.
             if (result.IsSuccess) return;
+
+            //  This ignores message from itself.
+            //  This is located here, after the result.IsSuccess check because
+            //  the bot DOES send commands to itself, but it does NOT need
+            //  to literally chat with itself.
+
+            ulong authorId = context.User.Id;
+            ulong userId = _client.CurrentUser.Id;
+            if (authorId == userId) return;
 
             // When command-parsing fails, try different responses
             switch (result.Error)
