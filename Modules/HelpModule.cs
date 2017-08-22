@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using System.Linq;
 using System.Threading.Tasks;
 using YADB.Common;
@@ -32,10 +33,16 @@ namespace YADB.Modules
                 return;
             }
 
+            bool isDMChannel = Context.Guild == null;
+            
+            string preHelp = "These are the commands I can execute in "
+                +(isDMChannel?"this DM channel.":"public channels like the one "
+                +"where you requested help.");
+
             var builder = new EmbedBuilder()
             {
                 Color = Constants.SlateBlue,
-                Description = "These are the commands I can execute on the channel where you requested help."
+                Description = preHelp
             };
 
             foreach (var module in _service.Modules)
@@ -59,11 +66,24 @@ namespace YADB.Modules
                 }
             }
 
+            string postHelp = "Or you can have a conversation with me. ";
+
+            if (!isDMChannel)
+            {
+                SocketGuildUser guildUser = Context.Guild.CurrentUser;
+                postHelp += "Just make sure to always address me, so I know who you are talking to.\n\n"
+                + "You can address me with my username '"+guildUser.Username+"', "
+                + "my current nickname '"+guildUser.Nickname+"', "
+                + "or my command key '" + Configuration.Load().Prefix[0] + "' "
+                + "plus the first 2 characters of my nickname, e.g., '"
+                + Configuration.Load().Prefix[0] + Context.Guild.CurrentUser.Nickname.Substring(0, 2)
+                + "'";
+            }
+
             builder.AddField(x =>
             {
                 x.Name = "--";
-                x.Value = "Or you can have a conversation with me. "
-                + "Just make sure to always address me, so I know who you are talking to.";
+                x.Value = postHelp;
                 x.IsInline = false;
             });
 

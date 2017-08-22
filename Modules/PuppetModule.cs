@@ -182,8 +182,8 @@ namespace YADB.Modules
                 //  the 'delay' period, then prompt for a conversation.
                 if (Chat.LastMessageInterval.TotalMilliseconds > delayMillis)
                 {
-                    bool forceNick = false;
-                    if (rnd.NextDouble() < 0.1f || forceNick)
+                    bool forceNick = true;
+                    if (rnd.NextDouble() < 0.2f || forceNick)
                     {
                         //  change nickname
                         SocketSelfUser bot = Context.Client.CurrentUser;
@@ -196,6 +196,7 @@ namespace YADB.Modules
                         SocketGuildChannel guildChannel = guild.GetChannel(guild.Id);
                         ITextChannel textChannel = guildChannel as ITextChannel;
 
+                        await textChannel.SendMessageAsync(nickname + ", #del you");
                         await textChannel.SendMessageAsync(nickname + ", #botnick");
                     }
                     else

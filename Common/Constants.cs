@@ -127,7 +127,7 @@ namespace YADB.Common
         {
             "{name}{j}{#}", "{#}{j}{name}",
             "{a}{j}{#}","{a}{a}{j}{#}",
-            "{a}{#}{a}",
+            "{a}{#}{a}", "{a}{a}{a}{be}", "{#}{be}",
             "{name}{be}"
         };
 
@@ -139,13 +139,13 @@ namespace YADB.Common
         // {s}
         private static string[] FancySymbols = new string[]
         {
-            "x","X", "o", "O", ".", ":", "~", "<>","><","=", "-","_","/\\","\\/","|","*","+"
+            "x","X", "o", "O", ".", ":", "~", "<>","><","=", "-","_","/\\","\\/","|","||","*","+"
         };
 
         // {j}
         private static string[] FancyJoiner = new string[]
         {
-            ".", "-", "=", "_", "~", ""
+            ".", "-", "_", "~", ""
         };
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace YADB.Common
             string template = FancyNames.Random();
 
             //  change the original name
-            switch (rnd.Next(6))
+            switch (rnd.Next(7))
             {
                 case 0:
                     name = name.StandardToLeet(rnd.Next(3) + 1);
@@ -201,6 +201,9 @@ namespace YADB.Common
                     break;
                 case 3:
                     name = name.ToProperCase();
+                    break;
+                case 4:
+                    name = name.ToUpper();
                     break;
                 default:
                     break;
@@ -215,7 +218,7 @@ namespace YADB.Common
             //  replace random character symbols
             int num = rnd.Next(0, 26);
             char letter = (char)('a' + num);
-            result = result.Replace("{a}", letter.ToString());
+            result = result.Replace("{a}", letter.ToString().ToUpper());
 
             //  add bookends
             bool useBookend = result.IndexOf("{be}") > -1;

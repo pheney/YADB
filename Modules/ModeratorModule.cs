@@ -25,17 +25,15 @@ namespace YADB.Modules
 
         [Command("#botnick"), Alias("#bn")]
         [Remarks("Tell the bot to select a new nickname.")]
-        [MinPermissions(AccessLevel.ServerMod)]
         public async Task BotNick()
-        {
+        {            
             var allUsers = Context.Guild.Users;
-
-            SocketGuildUser self = Context.Guild.CurrentUser;
 
             int index = rnd.Next(allUsers.Count);
             string selectedUser = allUsers.Skip(index).First().Username;
             string newNick = Constants.ToFancyName(selectedUser);
 
+            SocketGuildUser self = Context.Guild.CurrentUser;            
             await self.ModifyAsync(x => x.Nickname = newNick);
             await ReplyAsync(self.Nickname + " becomes " + newNick);
         }

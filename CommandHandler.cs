@@ -132,7 +132,7 @@ namespace YADB
 
             string nickname = context.Guild.CurrentUser.Nickname;
             string[] nickPrefix = new string[] {
-                nickname,                nickname + " ",                nickname + ",",                nickname + ", "
+                nickname, nickname + " ", nickname + ",", nickname + ", "
             };
             bool hasNickPrefix = false;
             foreach (string prefix in nickPrefix)
@@ -141,21 +141,36 @@ namespace YADB
             }
 
             #endregion
+            #region Check for command + short nick Prefix, e.g., "!Ni"
 
+            string cmdNick = Configuration.Load().Prefix[0] 
+                + context.Guild.CurrentUser.Nickname.Substring(0, 2);
+            string[] cmdNickPrefix = new string[] {
+                cmdNick, cmdNick + " ", cmdNick + ",", cmdNick + ", "
+            };
+
+            bool hasCmdNickPrefix = false;
+            foreach (string prefix in cmdNickPrefix)
+            {
+                hasCmdNickPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
+            }
+
+            #endregion
 
             //  In a public channel, when there is no prefix to get the bot's
             //  attention, do nothing.
             if (!hasCommandPrefix
                 && !hasUsernamePrefix
                 && !hasMentionPrefix
-                && !hasNickPrefix) return;
+                && !hasNickPrefix
+                && !hasCmdNickPrefix) return;
 
-            await Program.AsyncConsoleMessage("Msg: " + msg, ConsoleColor.Magenta);
+            await Program.AsyncConsoleMessage("Public Command: " + msg.Content, ConsoleColor.Magenta);
 
-            //  Attempt to parts whatever was said to the bot as a command
+            //  Attempt to parse whatever was said as a command
             var result = await _cmds.ExecuteAsync(context, argPos);
 
-            await Program.AsyncConsoleMessage("Execute success: " + result.IsSuccess);
+            await Program.AsyncConsoleMessage("Public Cmd Result: " + result.ToString(), ConsoleColor.Magenta);
 
             //  When parsing is successful, that means the bot received a command
             //  and was able to execute it. So we exit.
@@ -175,17 +190,18 @@ namespace YADB
             {
                 case CommandError.UnknownCommand:
                     //  distinguish between chatting and fumbled #commands
-                    string[] words = msg.Content.Split(' ');
+                    string submessage = msg.Content.Substring(argPos);
+                    string[] words = submessage.Split(' ');
                     bool hasSubprefix = false;
                     foreach (string subprefix in Configuration.Load().SubPrefix)
                     {
-                        hasSubprefix |= words[1].StartsWith(subprefix);
+                        hasSubprefix |= words[0].StartsWith(subprefix);
                     }
 
                     if (hasSubprefix)
                     {
                         //  fumbled #command
-                        await ErrorAsync(context, words[1], "typo?");
+                        await ErrorAsync(context, words[0], "typo?");
                     }
                     else
                     {
@@ -193,9 +209,19 @@ namespace YADB
                         await Services.Chat.Reply(context, msg.Content);
                     }
                     break;
+                case CommandError.UnmetPrecondition:
+                    await context.Channel.SendMessageAsync("You have no power here!");
+                    break;
                 default:
-                    //  Any other execution failures should show an error message
-                    await ErrorAsync(context, msg.ToString().Substring(argPos), result.ErrorReason);
+                    if (result.ErrorReason.Equals("The server responded with error 403: Forbidden"))
+                    {
+                        await context.Channel.SendMessageAsync("These actions are forbidden!");
+                    }
+                    else
+                    {
+                        //  Any other execution failures should show an error message
+                        await ErrorAsync(context, msg.ToString().Substring(argPos), result.ErrorReason);
+                    }
                     break;
             }
         }
@@ -282,6 +308,8 @@ namespace YADB
                 return;
             }
 
+            await Program.AsyncConsoleMessage("DM Command: " + msg.Content, ConsoleColor.Magenta);
+
             //  First, assume user has entered a command.
             //  Try and execute the user input as a command with the given context.
             var result = await _cmds.ExecuteAsync(context, argPos);
@@ -304,7 +332,8 @@ namespace YADB
                     if (hasSubprefix)
                     {
                         //  fumbled #command
-                        string[] words = msg.Content.Split(' ');
+                        string submessage = msg.Content.Substring(argPos);
+                        string[] words = submessage.Split(' ');
                         await ErrorAsync(context, words.JoinWith(" ", 0, 1), "typo?");
                     }
                     else

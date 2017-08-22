@@ -8,14 +8,14 @@ using YADB.Preconditions;
 
 namespace YADB.Modules
 {
-    [Group("#Clean"), Alias("#cl"), Name("Delete Commands")]
+    [Group("#Delete"), Alias("#del"), Name("Delete Commands")]
     [RequireContext(ContextType.Guild)]
     [Summary("Remove messages from a channel.")]
     public class CleanModule : ModuleBase<SocketCommandContext>
     {
         [Command("you")]
         [Summary("Remove all recent messages")]
-        [MinPermissions(AccessLevel.ServerMod)]
+        //[MinPermissions(AccessLevel.ServerMod)]
         public async Task CleanAsync(int history = 100)
         {
             var self = Context.Guild.CurrentUser;
@@ -49,22 +49,23 @@ namespace YADB.Modules
         }
 
         [Command("user")]
-        //[RequireUserPermission(ChannelPermission.ManageMessages)]
-        //[RequireBotPermission(ChannelPermission.ManageMessages)]
+        [RequireUserPermission(ChannelPermission.ManageMessages)]
+        [RequireBotPermission(ChannelPermission.ManageMessages)]
         [Summary("Remove all recent messages from the specified user")]
         [MinPermissions(AccessLevel.ServerMod)]
-        public async Task UserAsync(SocketUser user, int history = 25)
+        public async Task UserAsync(string username, int history = 25)
         {
-            var messages = (await GetMessageAsync(history)).Where(x => x.Author.Id == user.Id);
+            ulong id = Context.User.Id;
+            var messages = (await GetMessageAsync(history)).Where(x => x.Author.Id == id);
             await DeleteMessagesAsync(messages);
 
-            var reply = await ReplyAsync($"Deleted **{messages.Count()}** message(s) by **{user}**");
+            var reply = await ReplyAsync($"Deleted **{messages.Count()}** message(s) by **{username}**");
             await DelayDeleteMessageAsync(reply);
         }
 
         [Command("bot")]
-        //[RequireUserPermission(ChannelPermission.ManageMessages)]
-        //[RequireBotPermission(ChannelPermission.ManageMessages)]
+        [RequireUserPermission(ChannelPermission.ManageMessages)]
+        [RequireBotPermission(ChannelPermission.ManageMessages)]
         [Summary("Remove all recent messages made by bots")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task BotsAsync(int history = 25)
@@ -76,9 +77,9 @@ namespace YADB.Modules
             await DelayDeleteMessageAsync(reply);
         }
 
-        [Command("contains")]
-        //[RequireUserPermission(ChannelPermission.ManageMessages)]
-        //[RequireBotPermission(ChannelPermission.ManageMessages)]
+        [Command("phrase")]
+        [RequireUserPermission(ChannelPermission.ManageMessages)]
+        [RequireBotPermission(ChannelPermission.ManageMessages)]
         [Summary("Remove all recent messages that contain a certain phrase")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task ContainsAsync(string text, int history = 25)
@@ -90,18 +91,18 @@ namespace YADB.Modules
             await DelayDeleteMessageAsync(reply);
         }
 
-        //[Command("attachments")]
-        //[RequireUserPermission(ChannelPermission.ManageMessages)]
-        //[RequireBotPermission(ChannelPermission.ManageMessages)]
-        //[Summary("Remove all recent messages with attachments")]
-        //public async Task AttachmentsAsync(int history = 25)
-        //{
-        //    var messages = (await GetMessageAsync(history)).Where(x => x.Attachments.Count() != 0);
-        //    await DeleteMessagesAsync(messages);
+        [Command("attach")]
+        [RequireUserPermission(ChannelPermission.ManageMessages)]
+        [RequireBotPermission(ChannelPermission.ManageMessages)]
+        [Summary("Remove all recent messages with attachments")]
+        public async Task AttachmentsAsync(int history = 25)
+        {
+            var messages = (await GetMessageAsync(history)).Where(x => x.Attachments.Count() != 0);
+            await DeleteMessagesAsync(messages);
 
-        //    var reply = await ReplyAsync($"Deleted **{messages.Count()}** message(s) with attachments.");
-        //    await DelayDeleteMessageAsync(reply);
-        //}
+            var reply = await ReplyAsync($"Deleted **{messages.Count()}** message(s) with attachments.");
+            await DelayDeleteMessageAsync(reply);
+        }
 
         private Task<IEnumerable<IMessage>> GetMessageAsync(int count)
             => Context.Channel.GetMessagesAsync(count).Flatten();

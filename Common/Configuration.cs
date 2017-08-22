@@ -38,7 +38,9 @@ namespace YADB
                 config.Token = token;
                 config.SaveJson();                                  // Save the new configuration object to file.
             }
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Configuration Loaded");
+            Console.ResetColor();
         }
 
         /// <summary> Save the configuration to the path specified in FileName. </summary>
