@@ -142,15 +142,20 @@ namespace YADB
 
             #endregion
 
+
             //  In a public channel, when there is no prefix to get the bot's
             //  attention, do nothing.
             if (!hasCommandPrefix 
                 && !hasUsernamePrefix 
                 && !hasMentionPrefix 
                 && !hasNickPrefix) return;
-                        
+
+            await Program.AsyncConsoleMessage("Msg: " + msg, ConsoleColor.Magenta);
+
             //  Attempt to parts whatever was said to the bot as a command
             var result = await _cmds.ExecuteAsync(context, argPos);
+
+            await Program.AsyncConsoleMessage("Execute success: " + result.IsSuccess);
 
             //  When parsing is successful, that means the bot received a command
             //  and was able to execute it. So we exit.

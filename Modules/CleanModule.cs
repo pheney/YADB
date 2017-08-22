@@ -8,13 +8,13 @@ using YADB.Preconditions;
 
 namespace YADB.Modules
 {
-    [Group("#Clean"), Alias ("#cl"), Name("Clean Commands")]
+    [Group("#Clean"), Alias("#cl"), Name("Delete Commands")]
     [RequireContext(ContextType.Guild)]
-    [Summary("Clean messages from a channel.")]
+    [Summary("Remove messages from a channel.")]
     public class CleanModule : ModuleBase<SocketCommandContext>
     {
-        [Command("yours")]
-        [Summary("Clean all recent messages")]
+        [Command("you")]
+        [Summary("Remove all recent messages")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task CleanAsync(int history = 100)
         {
@@ -22,10 +22,13 @@ namespace YADB.Modules
             var messages = (await GetMessageAsync(history)).Where(x => x.Author.Id == self.Id);
 
             if (self.GetPermissions(Context.Channel as SocketGuildChannel).ManageMessages)
+            {
                 await DeleteMessagesAsync(messages);
+            }
             else
-                foreach (var msg in messages)
-                    await msg.DeleteAsync();
+            {
+                foreach (var msg in messages) await msg.DeleteAsync();
+            }
 
             var reply = await ReplyAsync($"Deleted **{messages.Count()}** message(s)");
             await DelayDeleteMessageAsync(reply);
@@ -34,7 +37,7 @@ namespace YADB.Modules
         [Command("all")]
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         [RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Clean all recent messages")]
+        [Summary("Remove all recent messages")]
         [MinPermissions(AccessLevel.ServerAdmin)]
         public async Task AllAsync(int history = 25)
         {
@@ -48,7 +51,7 @@ namespace YADB.Modules
         [Command("user")]
         //[RequireUserPermission(ChannelPermission.ManageMessages)]
         //[RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Clean all recent messages from the specified user")]
+        [Summary("Remove all recent messages from the specified user")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task UserAsync(SocketUser user, int history = 25)
         {
@@ -62,7 +65,7 @@ namespace YADB.Modules
         [Command("bot")]
         //[RequireUserPermission(ChannelPermission.ManageMessages)]
         //[RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Clean all recent messages made by bots")]
+        [Summary("Remove all recent messages made by bots")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task BotsAsync(int history = 25)
         {
@@ -76,7 +79,7 @@ namespace YADB.Modules
         [Command("contains")]
         //[RequireUserPermission(ChannelPermission.ManageMessages)]
         //[RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Clean all recent messages that contain a certain phrase")]
+        [Summary("Remove all recent messages that contain a certain phrase")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task ContainsAsync(string text, int history = 25)
         {
@@ -90,7 +93,7 @@ namespace YADB.Modules
         //[Command("attachments")]
         //[RequireUserPermission(ChannelPermission.ManageMessages)]
         //[RequireBotPermission(ChannelPermission.ManageMessages)]
-        //[Summary("Clean all recent messages with attachments")]
+        //[Summary("Remove all recent messages with attachments")]
         //public async Task AttachmentsAsync(int history = 25)
         //{
         //    var messages = (await GetMessageAsync(history)).Where(x => x.Attachments.Count() != 0);

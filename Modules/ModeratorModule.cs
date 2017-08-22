@@ -12,7 +12,7 @@ namespace YADB.Modules
     [RequireContext(ContextType.Guild)]
     public class ModeratorModule : ModuleBase<SocketCommandContext>
     {
-        [Command("#kick")]
+        [Command("#kick"), Alias("#k")]
         [Remarks("Kick the specified user.")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Kick([Remainder]SocketGuildUser user)
@@ -23,12 +23,11 @@ namespace YADB.Modules
 
         #region
                 
-        [Command("#botnick")]
+        [Command("#botnick"), Alias("#bn")]
         [Remarks("Tell the bot to select a new nickname.")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task BotNick()
         {
-            //var self = await Context.Guild.GetCurrentUserAsync();
             var allUsers = Context.Guild.Users;
 
             SocketGuildUser self = Context.Guild.CurrentUser;
