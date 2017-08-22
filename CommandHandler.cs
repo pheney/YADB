@@ -164,14 +164,10 @@ namespace YADB
                 && !hasMentionPrefix
                 && !hasNickPrefix
                 && !hasCmdNickPrefix) return;
-
-            await Program.AsyncConsoleMessage("Public Command: " + msg.Content, ConsoleColor.Magenta);
-
+            
             //  Attempt to parse whatever was said as a command
             var result = await _cmds.ExecuteAsync(context, argPos);
-
-            await Program.AsyncConsoleMessage("Public Cmd Result: " + result.ToString(), ConsoleColor.Magenta);
-
+                        
             //  When parsing is successful, that means the bot received a command
             //  and was able to execute it. So we exit.
             if (result.IsSuccess) return;
@@ -307,9 +303,7 @@ namespace YADB
                 await context.Channel.SendMessageAsync(message);
                 return;
             }
-
-            await Program.AsyncConsoleMessage("DM Command: " + msg.Content, ConsoleColor.Magenta);
-
+                        
             //  First, assume user has entered a command.
             //  Try and execute the user input as a command with the given context.
             var result = await _cmds.ExecuteAsync(context, argPos);
