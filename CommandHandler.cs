@@ -137,7 +137,7 @@ namespace YADB
             bool hasNickPrefix = false;
             foreach (string prefix in nickPrefix)
             {
-                hasNickPrefix|= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
+                hasNickPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
             }
 
             #endregion
@@ -145,9 +145,9 @@ namespace YADB
 
             //  In a public channel, when there is no prefix to get the bot's
             //  attention, do nothing.
-            if (!hasCommandPrefix 
-                && !hasUsernamePrefix 
-                && !hasMentionPrefix 
+            if (!hasCommandPrefix
+                && !hasUsernamePrefix
+                && !hasMentionPrefix
                 && !hasNickPrefix) return;
 
             await Program.AsyncConsoleMessage("Msg: " + msg, ConsoleColor.Magenta);
@@ -211,7 +211,7 @@ namespace YADB
             //  Ignore messages from ourself
             ulong authorId = context.User.Id;
             ulong userId = _client.CurrentUser.Id;
-            if (authorId==userId) return;
+            if (authorId == userId) return;
 
             #region Check for commandPrefix, e.g., "!"
             //  Check if the message has any of the command prefixes
@@ -266,7 +266,7 @@ namespace YADB
             }
 
             #endregion
-            
+
             //  In a private DM channel, when there IS a prefix to get the bot's
             //  attention, inform the user not to use it.
             if (hasCommandPrefix
@@ -289,7 +289,7 @@ namespace YADB
             //  When successful, this means the user entered a valid command and
             //  the bot was able to execute it. No further processing is required.
             if (result.IsSuccess) return;
-            
+
             // When execution fails, try different responses
             switch (result.Error)
             {
@@ -305,7 +305,7 @@ namespace YADB
                     {
                         //  fumbled #command
                         string[] words = msg.Content.Split(' ');
-                        await ErrorAsync(context, words.JoinWith(" ",0,1), "typo?");
+                        await ErrorAsync(context, words.JoinWith(" ", 0, 1), "typo?");
                     }
                     else
                     {
@@ -360,7 +360,7 @@ namespace YADB
             EmbedBuilder builder = new EmbedBuilder()
             {
                 Color = Constants.SlateRed,
-                Description = "Command failed: '" + message  + "'\n"
+                Description = "Command failed: '" + message + "'\n"
                     + "Reason: " + reason
             };
 
@@ -368,7 +368,7 @@ namespace YADB
             var dmchannel = await context.User.GetOrCreateDMChannelAsync();
             await dmchannel.SendMessageAsync("", false, builder.Build());
         }
-     
+
         /// <summary>
         /// 2017-8-19
         /// </summary>

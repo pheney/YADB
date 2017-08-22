@@ -12,7 +12,7 @@ namespace YADB.Modules
         private CommandService _service;
 
         //  Constructor
-        public HelpModule(CommandService service)           
+        public HelpModule(CommandService service)
         {
             _service = service;
         }
@@ -24,7 +24,7 @@ namespace YADB.Modules
         /// The user is sent a message in their channel notifying them of the PM.
         /// </summary>
         [Command("#help"), Alias("help", "#h")]
-        public async Task HelpMenuAsync([Remainder]string command=null)
+        public async Task HelpMenuAsync([Remainder]string command = null)
         {
             if (!string.IsNullOrWhiteSpace(command))
             {

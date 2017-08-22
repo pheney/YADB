@@ -31,8 +31,8 @@ namespace YADB
         public async Task StartAsync()
         {
             //  Ensure the configuration file has been created
-            Configuration.EnsureExists();                    
-                                                             
+            Configuration.EnsureExists();
+
             //  Create a new instance of DiscordSocketClient
             _client = new DiscordSocketClient(new DiscordSocketConfig()
             {
@@ -42,22 +42,22 @@ namespace YADB
                 LogLevel = LogSeverity.Verbose,
 
                 //  Tell discord.net how long to store messages (per channel)
-                MessageCacheSize = 1000                      
+                MessageCacheSize = 1000
             });
 
             //  Register the console log event using a custom console writer
             _client.Log += (l) => AsyncConsoleLog(l);
-                        
+
             //  Connect to Discord
             await _client.LoginAsync(TokenType.Bot, Configuration.Load().Token);
             await _client.StartAsync();
 
             //  Initialize the command handler service
-            _commands = new CommandHandler();                
+            _commands = new CommandHandler();
             await _commands.InstallAsync(_client);
 
             //  Prevent the console window from closing
-            await Task.Delay(-1);                            
+            await Task.Delay(-1);
         }
 
         /// <summary>

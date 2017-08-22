@@ -6,7 +6,6 @@ using System;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using YADB.Common;
 
 namespace YADB.Services
 {
@@ -109,17 +108,17 @@ namespace YADB.Services
 
             //  Determine the channel to send the reply.
             ISocketMessageChannel messageChannel = context.Channel as ISocketMessageChannel;
-            
+
             //  Public channel conversation should be addressed back to the user,
             //  using their nickname in the guild / server.
             SocketGuild guild = context.Guild as SocketGuild;
-            
+
             if (guild != null)
             {
                 SocketGuildUser guildUser = guild.GetUser(id);
                 string nickname = guildUser.Nickname;
                 if (!string.IsNullOrWhiteSpace(nickname)) userName = nickname;
-            }            
+            }
 
             await messageChannel.SendMessageAsync((addressUser ? userName + ", " : "") + response);
             await StoreConversationToken(csFile, cs);

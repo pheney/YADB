@@ -22,7 +22,7 @@ namespace YADB.Modules
         }
 
         #region
-                
+
         [Command("#botnick"), Alias("#bn")]
         [Remarks("Tell the bot to select a new nickname.")]
         [MinPermissions(AccessLevel.ServerMod)]
@@ -39,7 +39,6 @@ namespace YADB.Modules
             await self.ModifyAsync(x => x.Nickname = newNick);
             await ReplyAsync(self.Nickname + " becomes " + newNick);
         }
-        //}
 
         #endregion
     }
