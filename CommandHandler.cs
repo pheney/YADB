@@ -32,6 +32,7 @@ namespace YADB
             await _cmds.AddModuleAsync<HelpModule>();
             await _cmds.AddModuleAsync<ModeratorModule>();
             await _cmds.AddModuleAsync<CleanModule>();
+            await _cmds.AddModuleAsync<DictionaryModule>();
 
             _client.MessageReceived += HandleCommandAsync;               // Register the messagereceived event to handle commands.
 

@@ -183,7 +183,7 @@ namespace YADB.Modules
                 if (Chat.LastMessageInterval.TotalMilliseconds > delayMillis)
                 {
                     bool forceNick = false;
-                    if (rnd.NextDouble() < 0.2f || forceNick)
+                    if (rnd.NextDouble() < 0.05d || forceNick)
                     {
                         //  change nickname
                         SocketSelfUser bot = Context.Client.CurrentUser;

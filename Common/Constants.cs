@@ -250,6 +250,15 @@ namespace YADB.Common
     public static class Extensions
     {
         /// <summary>
+        /// 2017-8-22
+        /// </summary>
+        public static List<T> AddUnique<T>(this List<T> source, T item)
+        {
+            if (!source.Contains(item)) source.Add(item);
+            return source;
+        }
+
+        /// <summary>
         /// 2017-8-18
         /// </summary>
         public static float Range(this Random source, float min, float max)
