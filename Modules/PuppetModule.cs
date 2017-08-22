@@ -182,7 +182,7 @@ namespace YADB.Modules
                 //  the 'delay' period, then prompt for a conversation.
                 if (Chat.LastMessageInterval.TotalMilliseconds > delayMillis)
                 {
-                    bool forceNick = true;
+                    bool forceNick = false;
                     if (rnd.NextDouble() < 0.2f || forceNick)
                     {
                         //  change nickname
