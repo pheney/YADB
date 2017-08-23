@@ -142,7 +142,13 @@ namespace YADB.Services
         static string port = "443";
         static string version = "v1";
         static string lang = "en";
-        static string template = "{protocol}://{endpoint}:{port}/api/{version}/entries/{lang}/{word}";
+        
+        //  Definition: https://od-api.oxforddictionaries.com:443/api/v1/entries/en/swim
+        //  Synonym: https://od-api.oxforddictionaries.com:443/api/v1/entries/en/swim/synonyms
+        static string defTemplate = "{protocol}://{endpoint}:{port}/api/{version}/entries/{lang}/{word}";
+
+        //  Lemma: https://od-api.oxforddictionaries.com:443/api/v1/inflections/en/swimming
+        static string lemmaTemplate = "{protocol}://{endpoint}:{port}/api/{version}/inflections/{lang}/{word}";
 
         static string id = "4a62e7ee76";
         static string key = "c72e5c078cbd8202e07d6cee6f95efac4e";
@@ -151,40 +157,46 @@ namespace YADB.Services
         #endregion
         #region API
 
-        public static Task GetDefinition(string word, out string definition)
+        public static Task GetDefinition(string word, out string[] definitions)
         {
-            SuggestWordsFor(word, "definitions", out definition);
+            //  Get lemma for word
+            string lemma = "";
+            GetLemmas(word, out lemma);
+
+            //  Build url
+            string fullurl = defTemplate
+                .Replace("{protocol}", protocol)
+                .Replace("{endpoint}", endpoint)
+                .Replace("{port}", port)
+                .Replace("{version}", version)
+                .Replace("{lang}", lang)
+                .Replace("{word}", word.ToLower());
+            
+            //  Get web response
+            JObject webResponse;
+            GetWebData(fullurl, out webResponse);
+
+            //  Check for 'No result'
+            if (webResponse == null)
+            {
+                definitions = null;
+                return Task.CompletedTask;
+            }
+
+            //  Find synonyms or antonyms
+            GetElements(webResponse, "senses", "definitions", out definitions);
+            
             return Task.CompletedTask;
         }
 
-        public static Task GetSynonym(string word, out string synonym)
+        public static Task GetSynonym(string word, out string[] synonyms)
         {
-            SuggestWordsFor(word, "synonyms", out synonym);
-            return Task.CompletedTask;
-        }
+            //  Get lemma for word
+            string lemma = "";
+            GetLemmas(word, out lemma);
 
-        public static Task GetAntonym(string word, out string antonym)
-        {
-            SuggestWordsFor(word, "antonyms", out antonym);
-            return Task.CompletedTask;
-        }
-
-        #endregion
-        #region Helpers
-
-        /// <summary>
-        /// 2017-8-17
-        /// Sample URL: https://od-api.oxforddictionaries.com:443/api/v1/entries/en/ace/synonyms
-        /// </summary>
-        /// <param name="word">word to look up</param>
-        /// <param name="wordType">synonyms, antonyms, etc</param>
-        /// <returns></returns>
-        private static Task SuggestWordsFor(string word, string wordType, out string result)
-        {
-            result = word;
-
-            //  query string
-            string fullurl = template
+            //  Build url
+            string fullurl = defTemplate
                 .Replace("{protocol}", protocol)
                 .Replace("{endpoint}", endpoint)
                 .Replace("{port}", port)
@@ -193,7 +205,177 @@ namespace YADB.Services
                 .Replace("{word}", word.ToLower());
 
             //  alternate word type
-            fullurl += "/" + wordType.ToLower();
+            fullurl += "/synonyms";
+
+            //  Get web response
+            JObject webResponse;
+            GetWebData(fullurl, out webResponse);
+
+            //  Check for 'No result'
+            if (webResponse == null)
+            {
+                synonyms = null;
+                return Task.CompletedTask;
+            }
+
+            //  Find synonyms or antonyms
+            GetElements(webResponse, "synonyms", "id", out synonyms);
+
+            //  dig out the antonyms from the web response
+            return Task.CompletedTask;
+        }
+
+        public static Task GetAntonym(string word, out string[] antonyms)
+        {
+            //  Get lemma for word
+            string lemma = "";
+            GetLemmas(word, out lemma);
+
+            //  Build url            
+            string fullurl = defTemplate
+                .Replace("{protocol}", protocol)
+                .Replace("{endpoint}", endpoint)
+                .Replace("{port}", port)
+                .Replace("{version}", version)
+                .Replace("{lang}", lang)
+                .Replace("{word}", word.ToLower());
+
+            //  alternate word type
+            fullurl += "/antonyms";
+
+            //  Get web response
+            JObject webResponse;
+            GetWebData(fullurl, out webResponse);
+
+            //  Check for 'No result'
+            if (webResponse == null)
+            {
+                antonyms = null;
+                return Task.CompletedTask;
+            }
+
+            //  Find synonyms or antonyms
+            GetElements(webResponse, "antonyms", "id", out antonyms);
+                        
+            //  dig out the antonyms from the web response
+            return Task.CompletedTask;
+        }
+
+        #endregion
+        #region JSON classes - Lemmatron
+
+        private class Lemmatron
+        {
+            //  Additional Information provided by OUP
+            public object metadata;
+
+            //  A list of inflections matching a given word
+            public HeadwordLemmatron[] results;
+        }
+
+        private class HeadwordLemmatron
+        {
+            //  The identifier of a word
+            public string id;
+
+            //  IANA language code
+            public string language;
+
+            //  A grouping of various senses in a specific language, and a lexical category that relates to a word
+            public LemmatronLexicalEntry[] lexicalEntries;
+
+            //  The json object type.Could be 'headword', 'inflection' or 'phrase'
+            public string type;
+
+            //  A given written or spoken realisation of a an entry, lowercased
+            public string word;
+        }
+
+        private class LemmatronLexicalEntry
+        {
+            //  optional
+            public GrammaticalFeaturesList gramaticalFeatures;
+
+            //  The canonical form of words for which the entry is an inflection
+            public InflectionsList inflectionOf;
+
+            //  IANA language code
+            public string language;
+
+            //  A linguistic category of words(or more precisely lexical items), generally defined by the syntactic or morphological behaviour of the lexical item in question, such as noun or verb
+            public string lexicalCategory;
+
+            //  A given written or spoken realisation of a an entry
+            public string text;
+        }
+
+        private class GrammaticalFeaturesList
+        {
+            public Model1 inline;
+        }
+
+        private class InflectionsList
+        {
+            public Model2 inline;
+        }
+
+        private class Model1
+        {
+            public string text;
+            public string type;
+        }
+
+        private class Model2
+        {
+            //  identify of the word
+            public string id;
+            public string text;
+        }
+
+        #endregion
+        #region Helpers
+
+        /// <summary>
+        /// 2017-8-22
+        /// Gets the "root" word, e.g., swimming -> swim
+        /// </summary>
+        private static Task GetLemmas(string word, out string lemma)
+        {
+            lemma = word;
+
+            //  query string
+            string fullurl = lemmaTemplate
+                .Replace("{protocol}", protocol)
+                .Replace("{endpoint}", endpoint)
+                .Replace("{port}", port)
+                .Replace("{version}", version)
+                .Replace("{lang}", lang)
+                .Replace("{word}", word.ToLower());
+
+            JObject response;
+            GetWebData(fullurl, out response);
+
+            //  Alternate method
+            Lemmatron lemmatron = JsonConvert.DeserializeObject<Lemmatron>(response.ToString());
+            lemma = lemmatron.results[0].lexicalEntries[0].inflectionOf.inline.id;
+            //  TODO -- return here if you use the above method
+
+            //  get the lemma / root word
+            string[] results = null;
+            GetElements(response, "inflectionOf", "id", out results);
+            if (results != null) lemma = results[0];
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 2017-8-22
+        /// Makes the WebRequest and returns the result. This may return
+        /// null if there was no result.
+        /// </summary>
+        private static Task GetWebData(string fullurl, out JObject result)
+        {
+            result = null;
 
             //  Build the web request
             WebRequest webRequest = WebRequest.Create(fullurl);
@@ -201,23 +383,15 @@ namespace YADB.Services
             webRequest.Headers.Add("app_id", decrypt(id, de));
             webRequest.Headers.Add("app_key", decrypt(key, de));
 
-            //  Create an empty response
-            WebResponse webResp = null;
-
             try
             {
                 //  Execute the request and put the result into response
-                webResp = webRequest.GetResponse();
+                WebResponse webResp = webRequest.GetResponse();
                 var encoding = ASCIIEncoding.ASCII;
                 using (var reader = new System.IO.StreamReader(webResp.GetResponseStream(), encoding))
                 {
                     //  Convert the json string to a json object
-                    JObject json = (JObject)JsonConvert.DeserializeObject(reader.ReadToEnd());
-
-                    //  Find synonyms
-                    var found = GetAlternateWords(json, wordType);
-                    string[] resultArray = JObjectListToStringArray(found, "text");
-                    result = string.Join(",", resultArray);
+                    result = (JObject)JsonConvert.DeserializeObject(reader.ReadToEnd());
                 }
             }
             catch (WebException)
@@ -226,12 +400,200 @@ namespace YADB.Services
                 //  500 : Internal Error. An error occurred while processing the data.
                 //  Do nothing -- by default this returns the original word if
                 //  no alternates are found.
+                result = null;
             }
 
             return Task.CompletedTask;
         }
 
         /// <summary>
+        /// 20-17-8-22
+        /// This is used to get
+        ///     lemmas (objectName: "inflectionOf", keyName: "id") --> return string[]
+        ///     synonyms (objectName: "synonyms", keyName: "id") --> return string[]
+        ///     antonyms (objectName: "antonyms", keyName: "id") --> return string[]
+        ///     definitions (objectName: "senses", keyName: "definitions") --> return string[]
+        /// 
+        /// </summary>
+        /// <param name="json">The object returned from the GetWebData() request</param>
+        /// <param name="objectName">The object of interest, e.g., "synonyms", "definition", etc</param>
+        /// <param name="keyName">Object key that holds the data, e.g., "id" or "text"</param>
+        /// <param name="result">The string result found</param>
+        /// <returns></returns>
+        private static Task GetElements(JObject json, string objectName, string keyName, out string[] results)
+        {
+            #region Sample Result -> Lemmas
+            /*  
+                "inflectionOf": [
+                    {
+                        "id": "swim",
+                        "text": "swim"
+                    }
+                ]
+            */
+            #endregion
+            #region Sample Result -> Synonym
+            /*
+                "synonyms": [
+                    {
+                        "id": "wunderkind",
+                        "language": "en",
+                        "text": "wunderkind"
+                    }
+                ]
+             */
+            #endregion
+            #region Sample Result -> Definitions
+            /*
+                "senses": [
+                    {
+                        "definitions": [
+                            "a playing card with a single spot on it, ranked as the highest card in its suit in most card games"
+                        ]
+                    }
+                ]
+             */
+            #endregion
+
+            //  Get all the objects with key of "objectName"
+            JObject[] objectArray = null;
+            GetObjectsByKey(json, objectName, out objectArray);
+
+            //  For each of these objects, get all the objects with key of "keyName"
+            JObject[] keyArray = null;
+            List<JObject> keyList = new List<JObject>();
+            foreach (JObject item in objectArray)
+            {
+                GetObjectsByKey(item, keyName, out keyArray);
+                keyList.AddRange(keyArray.ToList());
+            }
+
+            //  For each of these objects, get the values of every object
+            List<string> resultList = new List<string>();
+            foreach (var item in keyArray)
+            {
+                resultList.AddUnique(item.Value<string>());
+            }
+
+            results = resultList.ToArray();
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 2017-8-22
+        /// This creates an array "results" of json objects. The contents of the list
+        /// are all objects in the source object "json" with a key that matches the
+        /// parameter "key".
+        /// </summary>
+        /// <param name="json">the object to search</param>
+        /// <param name="key">the key to find</param>
+        /// <param name="results">an array of string values of all the keys found</param>
+        /// <returns></returns>
+        private static Task GetObjectsByKey(JObject json, string key, out JObject[] results)
+        {
+            List<JObject> resultList = new List<JObject>();
+
+            foreach (var item in json)
+            {
+                string itemKey = item.Key;
+                if (itemKey.Equals(key, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    //  Key DOES match
+
+                    //  when the value is an array
+                    if (item.Value.Type.Equals(JTokenType.Array))
+                    {
+                        foreach (var arrayitem in item.Value)
+                        {
+                            resultList.Add((JObject)arrayitem);
+                        }
+                        continue;
+                    }
+
+                    //  when the value is an object
+                    resultList.Add((JObject)item.Value);
+
+                } else
+                {
+                    //  Key does NOT match
+                    JObject[] subResults;
+
+                    //  when the value is an array
+                    if (item.Value.Type.Equals(JTokenType.Array))
+                    {
+                        foreach (var arrayitem in item.Value)
+                        {
+                            GetObjectsByKey((JObject)arrayitem, key, out subResults);
+                            resultList.AddRange(subResults.ToList());
+                        }
+                        continue;
+                    }
+
+                    //  when the value is an object
+                    GetObjectsByKey((JObject)item.Value, key, out subResults);
+                    resultList.AddRange(subResults.ToList());
+                }
+            }
+
+            results = resultList.ToArray();
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 2017-8-22
+        /// This creates an array "results" of strings. The contents of the array
+        /// are all strings in the source object "json" with a key that matches the
+        /// parameter "key".
+        /// </summary>
+        /// <param name="json">the object to search</param>
+        /// <param name="key">the key to find</param>
+        /// <param name="results">an array of string values of all the keys found</param>
+        /// <returns></returns>
+        private static Task GetStringsByKey(JObject json, string key, out string[] results)
+        {
+            List<string> resultList = new List<string>();
+
+            foreach (var item in json)
+            {
+                string itemKey = item.Key;
+                if (itemKey.Equals(key, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    //  Key DOES match
+
+                    if (item.Value.Type.Equals(JTokenType.String))
+                    {
+                        resultList.Add((string)item.Value);
+                        continue;
+                    } else
+                    {
+                        string[] subResults;
+                        GetStringsByKey((JObject)item.Value, key, out subResults);
+                        resultList.AddRange(subResults.ToList());
+                    }                    
+                } else
+                {
+                    //  Key does NOT match
+                
+                    //  Descend when value is an object
+                    if (!item.Value.Type.Equals(JTokenType.String))
+                    {
+                        string[] subResults;
+                        GetStringsByKey((JObject)item.Value, key, out subResults);
+                        resultList.AddRange(subResults.ToList());
+                    }
+                }
+            }
+
+            results = resultList.ToArray();
+            return Task.CompletedTask;
+        }
+
+        #region deprecated
+
+        /// <summary>
+        /// 2017-8-22 DEPRECATED
+        /// Original JSON search method
+        /// 
         /// Sample input:
         ///     "synonyms": [
         ///         {
@@ -305,6 +667,8 @@ namespace YADB.Services
             }
             return results.ToArray();
         }
+
+        #endregion
 
         /// <summary>
         /// 2017-8-17

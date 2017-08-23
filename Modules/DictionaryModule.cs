@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using YADB.Services;
 using System;
+using YADB.Common;
 
 namespace YADB.Modules
 {
@@ -32,7 +33,7 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.User)]
         public async Task Define(string word)
         {
-            await ReplyAsync("**" + word + "**");
+            await ReplyAsync("**" + word.ToUpper() + "**");
             await Definition(word);
             await Syn(word);
             await Ant(word);
@@ -43,7 +44,7 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.User)]
         public async Task Synonym(string word)
         {
-            await ReplyAsync("**" + word + "**");
+            await ReplyAsync("**" + word.ToUpper() + "**");
             await Syn(word);
         }
 
@@ -52,70 +53,80 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.User)]
         public async Task Antonym(string word)
         {
-            await ReplyAsync("**" + word + "**");
+            await ReplyAsync("**" + word.ToUpper() + "**");
             await Ant(word);
         }
 
         #region Private Helpers
-
-        private string LimitLength(string source, int maxLength)
-        {
-            source = source.Replace(",", ", ");
-            source = source.Substring(0, Math.Min(source.Length, maxLength));
-            int lastIndex = source.LastIndexOf(", ");
-            if (lastIndex > -1) source = source.Substring(0, lastIndex);
-            return source;
-        }
-
+        
         private async Task Definition(string word)
         {
-            string results = "";
+            string[] results = null;
             await OED.GetDefinition(word, out results);
-            if (word.Equals(results, System.StringComparison.OrdinalIgnoreCase))
+            if (results==null)
             {
                 await ReplyAsync("No definition found");
             }
             else
             {
-                //  Ensure results are less than 2000 characters.
-                //  The maximum permitted message length on Discord.
-                if (results.Length>2000)
-                {
-                    results = results.Substring(0, Math.Min(1997, results.Length)) + "...";
+                await ReplyAsync("\n_meaning_\n");
+                for (int i = 0;i <results.Length;i++) {
+                    string display = results[i];
+
+                    //  Ensure each result is less than 2000 characters.
+                    //  The maximum permitted message length on Discord.
+                    if (display.Length > 2000)
+                    {
+                        display = display.Substring(0, Math.Min(1997, display.Length)) + "...";
+                    } 
+                    await ReplyAsync("  **"+i+"**: " + display);
                 }
-                await ReplyAsync("\n_meaning_\n" + results);
             }
         }
 
         private async Task Syn(string word)
         {
-            string results = "";
+            string[] results = null; 
             await OED.GetSynonym(word, out results);
-            if (word.Equals(results, System.StringComparison.OrdinalIgnoreCase))
+            if (results == null)
             {
                 await ReplyAsync("No synonyms found");
             }
             else
             {
+                await ReplyAsync("\n_synonym_\n");
+
                 //  Ensure results are less than 2000 characters.
                 //  The maximum permitted message length on Discord.
-                await ReplyAsync("\n_synonym_\n" + LimitLength(results, 2000));
+                string display = results.JoinWith(", ");
+                if (display.Length > 2000)
+                {
+                    display = display.Substring(0, Math.Min(1997, display.Length)) + "...";
+                }
+                await ReplyAsync(display);
             }
         }
 
-        private async Task Ant(string word) { 
+        private async Task Ant(string word) {
 
-            string results = "";
+            string[] results = null;
             await OED.GetAntonym(word, out results);
-            if (word.Equals(results, System.StringComparison.OrdinalIgnoreCase))
+            if (results == null)
             {
                 await ReplyAsync("No antonyms found");
             }
             else
             {
+                await ReplyAsync("\n_antonym_\n");
+
                 //  Ensure results are less than 2000 characters.
                 //  The maximum permitted message length on Discord.
-                await ReplyAsync("\n_antonym_\n" + LimitLength(results, 2000));
+                string display = results.JoinWith(", ");
+                if (display.Length > 2000)
+                {
+                    display = display.Substring(0, Math.Min(1997, display.Length)) + "...";
+                }
+                await ReplyAsync(display);
             }
         }
 

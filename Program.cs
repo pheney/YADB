@@ -19,6 +19,7 @@ namespace YADB
     ///     DONE -- Filter !Help results based on user access level
     ///     #### -- Integrate OED module from my thesaurus console application.
     /// Ref: https://discord.foxbot.me/docs/api/
+    /// Ref: https://forum.codingwithstorm.com/index.php?board=29.0
     /// </summary>
     public class Program
     {
