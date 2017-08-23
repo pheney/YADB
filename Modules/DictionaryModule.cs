@@ -1,20 +1,111 @@
-﻿using Discord.Commands;
-using YADB.Preconditions;
-using System.Linq;
+﻿using Discord;
+using Discord.Commands;
 using System.Threading.Tasks;
-using YADB.Services;
-using System;
 using YADB.Common;
+using YADB.Preconditions;
+using YADB.Services;
 
 namespace YADB.Modules
 {
-    [Name("Query Commands")]
-    public class DictionaryModule:ModuleBase<SocketCommandContext>
+    [Name("Grammar Commands")]
+    public class DictionaryModule : ModuleBase<SocketCommandContext>
     {
+        private static string NoResultsFound = "No results found for \"{word}\".\n\n"
+            + "Try the Root (unconjugated) form of the word. "
+            + "The root form is the infinitive form with \"to\" removed, "
+            + "i.e., swimming -> to swim -> swim; crashing -> to crash -> crash.";
+
+        [Command("#define"), Alias("#def")]
+        [Remarks("Returns the meaning of a word")]
+        [MinPermissions(AccessLevel.User)]
+        public async Task DefineWord(string word, string maxDefinitions = null)
+        {
+            int defaultCount = 3;
+            int showCount = defaultCount;
+            if (maxDefinitions != null)
+            {
+                if (!int.TryParse(maxDefinitions, out showCount))
+                {
+                    showCount = defaultCount;
+                }
+            }
+            string[] results;
+            await OED.GetDefinition(word, out results);
+            string definition = Italic("meaning") + "\n";
+            if (results == null || results.Length == 0) definition += NoResultFor(word);
+            else definition += results.EnumerateArray(showCount);
+
+            var builder = new EmbedBuilder()
+            {
+                Color = Constants.SeverityToColor(Constants.MessageSeverity.Info),
+                Description = (Bold(word) + ", " + definition).CapLength()
+            };
+
+            await ReplyAsync("", false, builder);
+        }
+
+        [Command("#synonym"), Alias("#syn")]
+        [Remarks("Returns words with similar meanings")]
+        [MinPermissions(AccessLevel.User)]
+        public async Task SynonymForWord(string word, string maxDefinitions = null)
+        {
+            int defaultCount = 3;
+            int showCount = defaultCount;
+            if (maxDefinitions != null)
+            {
+                if (!int.TryParse(maxDefinitions, out showCount))
+                {
+                    showCount = defaultCount;
+                }
+            }
+            string[] results;
+            await OED.GetSynonym(word, out results);
+            string synonyms = Italic("synonyms") + "\n";
+            if (results == null || results.Length == 0) synonyms += NoResultFor(word);
+            else synonyms += results.JoinWith(", ", 0, showCount);
+
+            var builder = new EmbedBuilder()
+            {
+                Color = Constants.SeverityToColor(Constants.MessageSeverity.Info),
+                Description = (Bold(word) + ", " + synonyms).CapLength()
+            };
+
+            await ReplyAsync("", false, builder);
+        }
+
+        [Command("#antonym"), Alias("#ant")]
+        [Remarks("Returns words with opposite meanings")]
+        [MinPermissions(AccessLevel.User)]
+        public async Task AntonymForWord(string word, string maxDefinitions = null)
+        {
+            int defaultCount = 3;
+            int showCount = defaultCount;
+            if (maxDefinitions != null)
+            {
+                if (!int.TryParse(maxDefinitions, out showCount))
+                {
+                    showCount = defaultCount;
+                }
+            }
+            string[] results;
+            await OED.GetAntonym(word, out results);
+            string antonyms = Italic("antonyms") + "\n";
+            if (results == null || results.Length == 0) antonyms += NoResultFor(word);
+            else antonyms += results.JoinWith(", ", 0, showCount);
+
+            var builder = new EmbedBuilder()
+            {
+                Color = Constants.SeverityToColor(Constants.MessageSeverity.Info),
+                Description = (Bold(word) + ", " + antonyms).CapLength()
+            };
+
+            await ReplyAsync("", false, builder);
+        }
+
         [Command("#homonym"), Alias("#hom")]
         [Remarks("Lists or explains frequently misused homonyms")]
         [MinPermissions(AccessLevel.User)]
-        public async Task Homonym(string word =null)
+        public async Task HomonymForWord(string word = null)
         {
             if (word != null)
             {
@@ -23,111 +114,25 @@ namespace YADB.Modules
                 return;
             }
 
-            //  Provide list of frequently misused homonyms            
-            
+            //  Provide list of frequently misused homonyms                       
             await ReplyAsync("http://grammarist.com/homophones/");
         }
 
-        [Command("#define"),Alias("#def")]
-        [Remarks("Returns the meaning of a word")]
-        [MinPermissions(AccessLevel.User)]
-        public async Task Define(string word)
-        {
-            await ReplyAsync("**" + word.ToUpper() + "**");
-            await Definition(word);
-            await Syn(word);
-            await Ant(word);
-        }
-
-        [Command("#synonym"), Alias("#syn")]
-        [Remarks("Returns words with similar meanings")]
-        [MinPermissions(AccessLevel.User)]
-        public async Task Synonym(string word)
-        {
-            await ReplyAsync("**" + word.ToUpper() + "**");
-            await Syn(word);
-        }
-
-        [Command("#antonym"), Alias("#ant")]
-        [Remarks("Returns words with opposite meanings")]
-        [MinPermissions(AccessLevel.User)]
-        public async Task Antonym(string word)
-        {
-            await ReplyAsync("**" + word.ToUpper() + "**");
-            await Ant(word);
-        }
-
         #region Private Helpers
-        
-        private async Task Definition(string word)
-        {
-            string[] results = null;
-            await OED.GetDefinition(word, out results);
-            if (results==null)
-            {
-                await ReplyAsync("No definition found");
-            }
-            else
-            {
-                await ReplyAsync("\n_meaning_\n");
-                for (int i = 0;i <results.Length;i++) {
-                    string display = results[i];
 
-                    //  Ensure each result is less than 2000 characters.
-                    //  The maximum permitted message length on Discord.
-                    if (display.Length > 2000)
-                    {
-                        display = display.Substring(0, Math.Min(1997, display.Length)) + "...";
-                    } 
-                    await ReplyAsync("  **"+i+"**: " + display);
-                }
-            }
+        private static string NoResultFor(string word)
+        {
+            return NoResultsFound.Replace("{word}", word);
         }
 
-        private async Task Syn(string word)
+        private static string Italic(string word)
         {
-            string[] results = null; 
-            await OED.GetSynonym(word, out results);
-            if (results == null)
-            {
-                await ReplyAsync("No synonyms found");
-            }
-            else
-            {
-                await ReplyAsync("\n_synonym_\n");
-
-                //  Ensure results are less than 2000 characters.
-                //  The maximum permitted message length on Discord.
-                string display = results.JoinWith(", ");
-                if (display.Length > 2000)
-                {
-                    display = display.Substring(0, Math.Min(1997, display.Length)) + "...";
-                }
-                await ReplyAsync(display);
-            }
+            return "_" + word + "_";
         }
 
-        private async Task Ant(string word) {
-
-            string[] results = null;
-            await OED.GetAntonym(word, out results);
-            if (results == null)
-            {
-                await ReplyAsync("No antonyms found");
-            }
-            else
-            {
-                await ReplyAsync("\n_antonym_\n");
-
-                //  Ensure results are less than 2000 characters.
-                //  The maximum permitted message length on Discord.
-                string display = results.JoinWith(", ");
-                if (display.Length > 2000)
-                {
-                    display = display.Substring(0, Math.Min(1997, display.Length)) + "...";
-                }
-                await ReplyAsync(display);
-            }
+        private static string Bold(string word)
+        {
+            return "**" + word + "**";
         }
 
         #endregion

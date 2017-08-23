@@ -298,11 +298,12 @@ namespace YADB.Common
         /// <param name="source">an array of strings</param>
         /// <param name="conjunction">placed between each string</param>
         /// <returns>The array concatenated as a single string</returns>
-        public static string JoinWith(this string[] source, string conjunction = null, int? startIndex = null, int? endIndex = null)
+        public static string JoinWith(this string[] source, string conjunction = null, int? startIndex = null, int? count = null)
         {
             conjunction = conjunction ?? "";
             startIndex = startIndex ?? 0;
-            endIndex = endIndex == null ? source.Length : Math.Min((int)endIndex + 1, source.Length);
+            count = count == null ? source.Length : Math.Min((int)count, source.Length);
+            int endIndex = (int)(startIndex + count);
 
             string result = "";
             for (int i = (int)startIndex; i < endIndex; i++)
@@ -312,5 +313,22 @@ namespace YADB.Common
             }
             return result;
         }
+                
+        public static string EnumerateArray(this string[] source, int maxCount)
+        {
+            string result = "";
+            for (int i = 0; i < source.Length && i < maxCount; i++)
+            {
+                result += "  " + (i + 1).ToString() + ". " + source[i] + "\n";
+            }
+            return result;
+        }
+
+        public static string CapLength(this string source, int maxLength = 2000)
+        {
+            if (source.Length > maxLength) source = source.Substring(0, maxLength - 3) + "...";
+            return source;
+        }
+
     }
 }

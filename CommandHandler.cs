@@ -100,11 +100,6 @@ namespace YADB
             //  Check if the message has any of the command prefixes
 
             int argPos = 0;
-            bool hasCommandPrefix = false;
-            foreach (string prefix in Configuration.Load().Prefix)
-            {
-                hasCommandPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
-            }
 
             #endregion
             #region Check for UsernamePrefix, e.g., "Pqq"
@@ -112,7 +107,7 @@ namespace YADB
 
             string username = context.Guild.CurrentUser.Username;
             string[] usernamePrefix = new string[] {
-                username,                username + " ",                username + ",",                username + ", "
+                username, username + " ", username + ",", username + ", "
             };
 
             bool hasUsernamePrefix = false;
@@ -160,11 +155,10 @@ namespace YADB
 
             //  In a public channel, when there is no prefix to get the bot's
             //  attention, do nothing.
-            if (!hasCommandPrefix
-                && !hasUsernamePrefix
-                && !hasMentionPrefix
-                && !hasNickPrefix
-                && !hasCmdNickPrefix) return;
+            if (!hasUsernamePrefix && 
+                !hasMentionPrefix &&
+                !hasNickPrefix &&
+                !hasCmdNickPrefix) return;
             
             //  Attempt to parse whatever was said as a command
             var result = await _cmds.ExecuteAsync(context, argPos);
@@ -240,11 +234,6 @@ namespace YADB
             //  Check if the message has any of the command prefixes
 
             int argPos = 0;
-            bool hasCommandPrefix = false;
-            foreach (string prefix in Configuration.Load().Prefix)
-            {
-                hasCommandPrefix |= msg.HasStringPrefix(prefix, ref argPos, System.StringComparison.OrdinalIgnoreCase);
-            }
 
             #endregion
             #region Check for Username Prefix, e.g., "Pqq"
@@ -252,7 +241,7 @@ namespace YADB
 
             string username = _client.CurrentUser.Username;
             string[] usernamePrefix = new string[] {
-                username,                username + " ",                username + ",",                username + ", "
+                username, username + " ", username + ",", username + ", "
             };
 
             bool hasUsernamePrefix = false;
@@ -292,10 +281,9 @@ namespace YADB
 
             //  In a private DM channel, when there IS a prefix to get the bot's
             //  attention, inform the user not to use it.
-            if (hasCommandPrefix
-                || hasUsernamePrefix
-                || hasMentionPrefix
-                || hasNickPrefix)
+            if (hasUsernamePrefix ||
+                hasMentionPrefix ||
+                hasNickPrefix)
             {
                 string message = "There is no need to directly address me in a DM channel. "
                     + "It is only us; I know who you are talking to.";
@@ -329,7 +317,7 @@ namespace YADB
                         //  fumbled #command
                         string submessage = msg.Content.Substring(argPos);
                         string[] words = submessage.Split(' ');
-                        await ErrorAsync(context, words.JoinWith(" ", 0, 1), "typo?");
+                        await ErrorAsync(context, words.JoinWith(" ", 0, 2), "typo?");
                     }
                     else
                     {

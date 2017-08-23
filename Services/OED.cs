@@ -16,80 +16,7 @@ namespace YADB.Services
     /// </summary>
     public static class OED
     {
-        #region Homonym Data
-
-        public class Homophone
-        {
-            private static int _id = 0;
-            public int id;
-            public string word, definition;
-
-            public Homophone(string word, string definition, bool increment = false)
-            {
-                if (increment) _id++;
-                this.id = _id;
-                this.word = word;
-                this.definition = definition;
-            }
-            public bool Equals(string word)
-            {
-                return this.word.Equals(word, System.StringComparison.OrdinalIgnoreCase);
-            }
-            public override string ToString()
-            {
-                return word + " : " + definition;
-            }
-        }
-
-        /// <summary>
-        /// List of the most common offenders.
-        /// Ref: http://grammarist.com/homophones/
-        /// </summary>
-        private static Homophone[] h = new Homophone[]
-        {
-            new Homophone("their", "belonging to them", true),
-            new Homophone("they're", "they are"),
-            new Homophone("there", "a location"),
-            new Homophone("to", "towards", true),
-            new Homophone("too", "also"),
-            new Homophone("two", "the number between 1 and 3"),
-            new Homophone("mold", "fungas that grows in moist damp places, or the act of shaping something", true),
-            new Homophone("mould", "container used to shape molten liquid like metal or Jello"),
-            new Homophone("weather", "sun, rain, clouds", true),
-            new Homophone("whether", "a choice"),
-            new Homophone("carrot", "vegetable", true),
-            new Homophone("caret", "a proofreading symbol ^"),
-            new Homophone("karat", "measure of purity of gold"),
-            new Homophone("carat", "unit of weight for diamonds"),
-            new Homophone("affect", "to change or to pretend",true),
-            new Homophone("effect", "a result"),
-            new Homophone("laser", "a beam of coherent light", true),
-            new Homophone("lazer", "a gross mispelling of 'laser'"),
-            new Homophone("roll", "to turn over, (roll a die), a sequence (on a roll), a list (roll call)", true),
-            new Homophone("role", "a position or function"),
-            new Homophone("Bazaar", "place to shop", true),
-            new Homophone("bizarre", "weird"),
-            new Homophone("your", "belonging to you", true),
-            new Homophone("you're", "you are"),
-            new Homophone("turret", "big thing that rotates a gun, or a tall round tower on a castle wall", true),
-            new Homophone("turrent", "shameful mispelling of 'turret'"),
-            new Homophone("Tourette", "neuropsychiatric disorder, or a weak escuse by the uneducated to use excessive profanity"),
-            new Homophone("here", "a location", true),
-            new Homophone("hear", "to listen"),
-            new Homophone("farther", "comparison of physical distance", true),
-            new Homophone("further", "copmarison of figurative distance"),
-            new Homophone("bored", "nothing to do, or to have punctured with a hole", true),
-            new Homophone("board", "a piece of wood"),
-            new Homophone("canon", "general principle or criteria by which something is judged", true),
-            new Homophone("cannon", "a big gun"),
-            new Homophone("buy", "to purchase", true),
-            new Homophone("by", "atributed to someone"),
-            new Homophone("where", "a location", true),
-            new Homophone("wear", "to put on a piece of clothing"),
-            new Homophone("through", "to penetrate", true),
-            new Homophone("thru", "horrible mispelling of 'through'"),
-            new Homophone("threw", "to forcefully project")
-        };
+        #region Homonym API
 
         /// <summary>
         /// 2017-8-22
@@ -103,19 +30,76 @@ namespace YADB.Services
             return GetBuilderFor(GetAllHomophones(word));
         }
 
+        #endregion
+        #region Homonym Helpers and Data Structure
+
+        /// <summary>
+        /// List of the most common offenders.
+        /// Ref: http://grammarist.com/homophones/
+        /// </summary>
+        private static DefinedWord[] h = new DefinedWord[]
+        {
+            new DefinedWord("their", "belonging to them", true),
+            new DefinedWord("they're", "they are"),
+            new DefinedWord("there", "a location"),
+            new DefinedWord("to", "towards", true),
+            new DefinedWord("too", "also"),
+            new DefinedWord("two", "the number between 1 and 3"),
+            new DefinedWord("mold", "fungas that grows in moist damp places, or the act of shaping something", true),
+            new DefinedWord("mould", "container used to shape molten liquid like metal or Jello"),
+            new DefinedWord("weather", "sun, rain, clouds", true),
+            new DefinedWord("whether", "a choice"),
+            new DefinedWord("carrot", "vegetable", true),
+            new DefinedWord("caret", "a proofreading symbol ^"),
+            new DefinedWord("karat", "measure of purity of gold"),
+            new DefinedWord("carat", "unit of weight for diamonds"),
+            new DefinedWord("affect", "to change or to pretend",true),
+            new DefinedWord("effect", "a result"),
+            new DefinedWord("laser", "a beam of coherent light", true),
+            new DefinedWord("lazer", "a gross mispelling of 'laser'"),
+            new DefinedWord("roll", "to turn over, (roll a die), a sequence (on a roll), a list (roll call)", true),
+            new DefinedWord("role", "a position or function"),
+            new DefinedWord("Bazaar", "place to shop", true),
+            new DefinedWord("bizarre", "weird"),
+            new DefinedWord("your", "belonging to you", true),
+            new DefinedWord("you're", "you are"),
+            new DefinedWord("turret", "big thing that rotates a gun, or a tall round tower on a castle wall", true),
+            new DefinedWord("turrent", "shameful mispelling of 'turret'"),
+            new DefinedWord("Tourette", "neuropsychiatric disorder, or a weak escuse by the uneducated to use excessive profanity"),
+            new DefinedWord("here", "a location", true),
+            new DefinedWord("hear", "to listen"),
+            new DefinedWord("farther", "comparison of physical distance", true),
+            new DefinedWord("further", "copmarison of figurative distance"),
+            new DefinedWord("bored", "nothing to do, or to have punctured with a hole", true),
+            new DefinedWord("board", "a piece of wood"),
+            new DefinedWord("canon", "general principle or criteria by which something is judged", true),
+            new DefinedWord("cannon", "a big gun"),
+            new DefinedWord("buy", "to purchase", true),
+            new DefinedWord("by", "atributed to someone"),
+            new DefinedWord("where", "a location", true),
+            new DefinedWord("wear", "to put on a piece of clothing"),
+            new DefinedWord("lie", "you lie down", true),
+            new DefinedWord("lay", "you lay _other things_ down"),
+            new DefinedWord("patients", "people in a hospital", true),
+            new DefinedWord("patience", "toleration for stupidity"),
+            new DefinedWord("through", "to penetrate", true),
+            new DefinedWord("thru", "horrible mispelling of 'through'"),
+            new DefinedWord("threw", "to forcefully project")
+        };
+
         /// <summary>
         /// 2017-8-22
         /// Returns all words that sound alike, but are spelt different.
         /// </summary>
-        private static Homophone[] GetAllHomophones(string word)
+        private static DefinedWord[] GetAllHomophones(string word)
         {
-            Homophone found = h.Where(x => x.Equals(word)).FirstOrDefault();
+            DefinedWord found = h.Where(x => x.Equals(word)).FirstOrDefault();
             if (found == null) return null;
-            Homophone[] result = h.Where(x => x.id == found.id).ToArray();
+            DefinedWord[] result = h.Where(x => x.homophoneId == found.homophoneId).ToArray();
             return result;
         }
 
-        private static EmbedBuilder GetBuilderFor(Homophone[] homophones)
+        private static EmbedBuilder GetBuilderFor(DefinedWord[] homophones)
         {
             string description = "";
             if (homophones != null)
@@ -132,6 +116,29 @@ namespace YADB.Services
                 Color = Constants.SlateBlue,
                 Description = description
             };
+        }
+
+        private class DefinedWord
+        {
+            private static int _homophoneId = 0;
+            public int homophoneId;
+            public string word, definition;
+
+            public DefinedWord(string word, string definition, bool increment = false)
+            {
+                if (increment) _homophoneId++;
+                this.homophoneId = _homophoneId;
+                this.word = word;
+                this.definition = definition;
+            }
+            public bool Equals(string word)
+            {
+                return this.word.Equals(word, System.StringComparison.OrdinalIgnoreCase);
+            }
+            public override string ToString()
+            {
+                return word + " : " + definition;
+            }
         }
 
         #endregion
@@ -155,7 +162,7 @@ namespace YADB.Services
         static string de = "2";
 
         #endregion
-        #region API
+        #region Dictionary API
 
         public static Task GetDefinition(string word, out string[] definitions)
         {
@@ -170,7 +177,7 @@ namespace YADB.Services
                 .Replace("{port}", port)
                 .Replace("{version}", version)
                 .Replace("{lang}", lang)
-                .Replace("{word}", word.ToLower());
+                .Replace("{word}", lemma.ToLower());
             
             //  Get web response
             JObject webResponse;
@@ -184,7 +191,7 @@ namespace YADB.Services
             }
 
             //  Find synonyms or antonyms
-            GetElements(webResponse, "senses", "definitions", out definitions);
+            definitions = ParseDefinitions(webResponse);
             
             return Task.CompletedTask;
         }
@@ -202,7 +209,7 @@ namespace YADB.Services
                 .Replace("{port}", port)
                 .Replace("{version}", version)
                 .Replace("{lang}", lang)
-                .Replace("{word}", word.ToLower());
+                .Replace("{word}", lemma.ToLower());
 
             //  alternate word type
             fullurl += "/synonyms";
@@ -219,7 +226,7 @@ namespace YADB.Services
             }
 
             //  Find synonyms or antonyms
-            GetElements(webResponse, "synonyms", "id", out synonyms);
+            synonyms = ParseThesaurus(webResponse, "synonyms");
 
             //  dig out the antonyms from the web response
             return Task.CompletedTask;
@@ -238,7 +245,7 @@ namespace YADB.Services
                 .Replace("{port}", port)
                 .Replace("{version}", version)
                 .Replace("{lang}", lang)
-                .Replace("{word}", word.ToLower());
+                .Replace("{word}", lemma.ToLower());
 
             //  alternate word type
             fullurl += "/antonyms";
@@ -255,88 +262,17 @@ namespace YADB.Services
             }
 
             //  Find synonyms or antonyms
-            GetElements(webResponse, "antonyms", "id", out antonyms);
+            antonyms = ParseThesaurus(webResponse, "antonyms");            
                         
             //  dig out the antonyms from the web response
             return Task.CompletedTask;
         }
 
         #endregion
-        #region JSON classes - Lemmatron
-
-        private class Lemmatron
-        {
-            //  Additional Information provided by OUP
-            public object metadata;
-
-            //  A list of inflections matching a given word
-            public HeadwordLemmatron[] results;
-        }
-
-        private class HeadwordLemmatron
-        {
-            //  The identifier of a word
-            public string id;
-
-            //  IANA language code
-            public string language;
-
-            //  A grouping of various senses in a specific language, and a lexical category that relates to a word
-            public LemmatronLexicalEntry[] lexicalEntries;
-
-            //  The json object type.Could be 'headword', 'inflection' or 'phrase'
-            public string type;
-
-            //  A given written or spoken realisation of a an entry, lowercased
-            public string word;
-        }
-
-        private class LemmatronLexicalEntry
-        {
-            //  optional
-            public GrammaticalFeaturesList gramaticalFeatures;
-
-            //  The canonical form of words for which the entry is an inflection
-            public InflectionsList inflectionOf;
-
-            //  IANA language code
-            public string language;
-
-            //  A linguistic category of words(or more precisely lexical items), generally defined by the syntactic or morphological behaviour of the lexical item in question, such as noun or verb
-            public string lexicalCategory;
-
-            //  A given written or spoken realisation of a an entry
-            public string text;
-        }
-
-        private class GrammaticalFeaturesList
-        {
-            public Model1 inline;
-        }
-
-        private class InflectionsList
-        {
-            public Model2 inline;
-        }
-
-        private class Model1
-        {
-            public string text;
-            public string type;
-        }
-
-        private class Model2
-        {
-            //  identify of the word
-            public string id;
-            public string text;
-        }
-
-        #endregion
-        #region Helpers
+        #region Dictionary Helpers
 
         /// <summary>
-        /// 2017-8-22
+        /// 2017-8-22 -- Validated
         /// Gets the "root" word, e.g., swimming -> swim
         /// </summary>
         private static Task GetLemmas(string word, out string lemma)
@@ -351,25 +287,18 @@ namespace YADB.Services
                 .Replace("{version}", version)
                 .Replace("{lang}", lang)
                 .Replace("{word}", word.ToLower());
+            fullurl += "/grammaticalFeatures=present";
 
             JObject response;
             GetWebData(fullurl, out response);
 
-            //  Alternate method
-            Lemmatron lemmatron = JsonConvert.DeserializeObject<Lemmatron>(response.ToString());
-            lemma = lemmatron.results[0].lexicalEntries[0].inflectionOf.inline.id;
-            //  TODO -- return here if you use the above method
-
-            //  get the lemma / root word
-            string[] results = null;
-            GetElements(response, "inflectionOf", "id", out results);
-            if (results != null) lemma = results[0];
+            if (response !=null) lemma = ParseLemmas(response);
 
             return Task.CompletedTask;
         }
 
         /// <summary>
-        /// 2017-8-22
+        /// 2017-8-22 -- Validated
         /// Makes the WebRequest and returns the result. This may return
         /// null if there was no result.
         /// </summary>
@@ -380,8 +309,8 @@ namespace YADB.Services
             //  Build the web request
             WebRequest webRequest = WebRequest.Create(fullurl);
             webRequest.ContentType = "application/json";
-            webRequest.Headers.Add("app_id", decrypt(id, de));
-            webRequest.Headers.Add("app_key", decrypt(key, de));
+            webRequest.Headers.Add("app_id", Decrypt(id, de));
+            webRequest.Headers.Add("app_key", Decrypt(key, de));
 
             try
             {
@@ -405,6 +334,8 @@ namespace YADB.Services
 
             return Task.CompletedTask;
         }
+
+        #region deprecated
 
         /// <summary>
         /// 20-17-8-22
@@ -456,10 +387,12 @@ namespace YADB.Services
             #endregion
 
             //  Get all the objects with key of "objectName"
+            //  These may be objects or arrays of objects
             JObject[] objectArray = null;
             GetObjectsByKey(json, objectName, out objectArray);
 
             //  For each of these objects, get all the objects with key of "keyName"
+            //  These may be objects or arrays of objects
             JObject[] keyArray = null;
             List<JObject> keyList = new List<JObject>();
             foreach (JObject item in objectArray)
@@ -478,7 +411,7 @@ namespace YADB.Services
             results = resultList.ToArray();
             return Task.CompletedTask;
         }
-
+        
         /// <summary>
         /// 2017-8-22
         /// This creates an array "results" of json objects. The contents of the list
@@ -588,6 +521,96 @@ namespace YADB.Services
             return Task.CompletedTask;
         }
 
+        #endregion deprecated
+        #region Specialized JSON parsers
+
+        /// <summary>
+        /// 2017-8-23
+        /// </summary>
+        /// <param name="json">The entire response object from the Lemmatron API call</param>
+        /// <returns>the uninflected form of the word, e.g., swimming -> swim</returns>
+        private static string ParseLemmas(JObject json)
+        {
+            JObject results = json["results"][0] as JObject;
+            JObject lexicalEntry = results["lexicalEntries"][0] as JObject;
+            JObject inflectionOf = lexicalEntry["inflectionOf"][0] as JObject;
+            return (string)inflectionOf["text"];
+        }
+
+        /// <summary>
+        /// 2017-8-23
+        /// </summary>
+        /// <param name="json">The entire response object from the Lemmatron API call</param>
+        /// <param name="types">"synonyms" or "antonyms"</param>
+        /// <returns>array of synonyms or antonyms</returns>
+        private static string[] ParseThesaurus(JObject json, string types)
+        {
+            List<string> resultList = new List<string>();
+
+            var results = json["results"][0];
+            var lexicalEntry = results["lexicalEntries"][0];
+            var entries = lexicalEntry["entries"][0];
+            var senses = entries["senses"][0];
+
+            var subsenses = senses["subsenses"];
+            if (subsenses != null) foreach (var item in subsenses)
+                {
+                    var typeArray = item[types];
+                    if (typeArray != null) foreach (var typeItem in typeArray)
+                        {
+                            resultList.Add((string)typeItem["text"]);
+                        }
+                }
+            return resultList.ToArray();
+        }
+
+        /// <summary>
+        /// 2017-8-23
+        /// </summary>
+        /// <param name="json">The entire response object from the Lemmatron API call</param>
+        /// <returns>an array of definitions</returns>
+        private static string[] ParseDefinitions(JObject json)
+        {
+            List<string> resultList = new List<string>();
+
+            var results = json["results"][0];
+            var lexicalEntry = results["lexicalEntries"][0];
+
+            //  iterate each entry of the array
+            var entries = lexicalEntry["entries"];
+            if (entries != null) foreach (var entry in entries)
+                {
+                    //  iterate the "senses" of the entry
+                    var senses = entry["senses"];
+                    if (senses != null) foreach (var sense in senses)
+                        {
+                            //  each "sense" has an array of definitions
+                            var senseDefinitions = sense["definitions"];
+                            if (senseDefinitions != null) foreach (var senseDef in senseDefinitions)
+                                {
+                                    resultList.Add((string)senseDef);
+                                }
+
+                            //  each "sense" has an array of subsenses
+                            var subsenses = sense["subsenses"];
+                            if (subsenses != null) foreach (var subsense in subsenses)
+                                {
+                                    //  each subsense has an array of definitions
+                                    var defArray = subsense["definitions"];
+                                    if (defArray != null) foreach (var defItem in defArray)
+                                        {
+                                            resultList.Add((string)defItem);
+                                        }
+                                }
+
+                        }
+
+                }
+
+            return resultList.ToArray();
+        }
+
+        #endregion
         #region deprecated
 
         /// <summary>
@@ -673,7 +696,7 @@ namespace YADB.Services
         /// <summary>
         /// 2017-8-17
         /// </summary>
-        private static string decrypt(string source, string key)
+        private static string Decrypt(string source, string key)
         {
             return source.Substring(int.Parse(key));
         }
