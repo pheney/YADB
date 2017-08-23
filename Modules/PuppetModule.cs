@@ -34,13 +34,13 @@ namespace YADB.Modules
         #region Attract mode / autonomous start conversation mode
 
         //  minutes
-        private static float attractDelayMin = 2;
-        private static float attractDelayMax = 9;
+        private static int attractDelayMin = 2;
+        private static int attractDelayMax = 9;
 
         [Command("#SetDelay"), Alias("#sd")]
         [Remarks("Set the mininum and maximum delay (in minutes) for the attract message")]
         [MinPermissions(AccessLevel.BotOwner)]
-        public async Task SetAttractDelay(params float[] delay)
+        public async Task SetAttractDelay(params int[] delay)
         {
             //  When no parameters exist, just show current status
             if (delay.Length < 2)
@@ -49,8 +49,8 @@ namespace YADB.Modules
                 return;
             }
 
-            float min = delay[0];
-            float max = delay[1];
+            int min = delay[0];
+            int max = delay[1];
 
             //  handle all the stupid delay values
             string message, details;
@@ -74,8 +74,8 @@ namespace YADB.Modules
             }
 
             //  update the values
-            PuppetModule.attractDelayMin = (float)min;
-            PuppetModule.attractDelayMax = (float)max;
+            PuppetModule.attractDelayMin = min;
+            PuppetModule.attractDelayMax = max;
 
             await ReportAttractDelay();
         }
