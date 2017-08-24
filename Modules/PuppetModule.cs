@@ -22,12 +22,15 @@ namespace YADB.Modules
         #region Status report
 
         [Command("#Status"), Alias("#s")]
-        [Remarks("Report the current state for chat and attract functions")]
+        [Remarks("Report the current state of bot's internal systems")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task StatusReport()
         {
             await ChatStatus(false);
             await AttractStatus(false);
+            await GameModule.RollingStatus(Context);
+            await GameModule.HaddawayStatus(Context);
+            await GameModule.EightBallStatus(Context);
         }
 
         #endregion

@@ -80,6 +80,8 @@ namespace YADB.Services
             new DefinedWord("wear", "to put on a piece of clothing"),
             new DefinedWord("lie", "you lie down", true),
             new DefinedWord("lay", "you lay _other things_ down"),
+            new DefinedWord("than", "compare things, \"10 is more _than_ 8\"", true),
+            new DefinedWord("then", "temporal sequence, \"get money, _then_ buy things\""),
             new DefinedWord("patients", "people in a hospital", true),
             new DefinedWord("patience", "toleration for stupidity"),
             new DefinedWord("through", "to penetrate", true),

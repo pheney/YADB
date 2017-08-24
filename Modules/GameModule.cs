@@ -5,6 +5,7 @@ using YADB.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Discord;
 
 namespace YADB.Modules
 {
@@ -12,6 +13,24 @@ namespace YADB.Modules
     public class GameModule : ModuleBase<SocketCommandContext>
     {
         #region Magic Eight Ball
+
+        public static Task EightBallStatus(SocketCommandContext context)
+        {
+            string display = "Magic Eight Ball: " + eightBallRolls + " predictions made";
+
+            EmbedBuilder builder = new EmbedBuilder
+            {
+                Color = Constants.SeverityToColor(Constants.MessageSeverity.Info),
+                Description = display
+            };
+
+            //  Send problem message via direct-message to the user            
+            context.Channel.SendMessageAsync("", false, builder.Build());
+
+            return Task.CompletedTask;
+        }
+
+        private static int eightBallRolls = 0;
 
         private static string[] EightBallResults = new string[]
         {
@@ -59,11 +78,51 @@ namespace YADB.Modules
                 await Task.Delay(4500);
 
                 await ReplyAsync("\"" + EightBallResults.Random() + "\"");
+                eightBallRolls++;
             }
         }
 
         #endregion
         #region Rickroll
+
+        public static Task RollingStatus(SocketCommandContext context)
+        {
+            string display = "Rick-roll status: ";
+            if (rolling)
+            {
+                display += "rolling on channel " + rollingChannelId;
+            }
+            else
+            {
+                display += "not rolling";
+            }
+            if (lastRollByChannel != null && lastRollByChannel.Count>0)
+            {
+                display += "\n" + RollingHistoryToString();
+            }
+
+            EmbedBuilder builder = new EmbedBuilder
+            {
+                Color = Constants.SeverityToColor(Constants.MessageSeverity.Info),
+                Description = display
+            };
+
+            //  Send problem message via direct-message to the user            
+            context.Channel.SendMessageAsync("", false, builder.Build());
+
+            return Task.CompletedTask;
+        }
+
+        private static string RollingHistoryToString()
+        {
+            string result = "";
+            foreach (var entry in lastRollByChannel)
+            {
+                result += "Channel " + entry.Key
+                    + ", last roll at " + entry.Value.ToLocalTime()+"\n";
+            }
+            return result.Substring(0, result.Length - 1);
+        }
 
         private static string[] astleyLyrics = new string[]
         {
@@ -103,6 +162,18 @@ namespace YADB.Modules
             "Never gonna tell a lie and hurt you..."
         };
         private static bool rolling = false;
+        private static ulong rollingChannelId;
+
+        /// <summary>
+        /// 2017-8-24
+        /// Indicates if the bot is currently Rick-Rolling on the channel
+        /// provided.
+        /// </summary>
+        public static bool IsRickRollingOnChannel(ulong channelId)
+        {
+            return rolling && rollingChannelId == channelId;
+        }
+
         private static Dictionary<ulong, DateTime> lastRollByChannel;
         private static Thread rollThread;
         private static TimeSpan rollFrequency = new TimeSpan(1, 0, 0);
@@ -114,8 +185,7 @@ namespace YADB.Modules
         {
             if (lastRollByChannel == null) lastRollByChannel = new Dictionary<ulong, DateTime>();
 
-            //  When called parameterless,
-            //  Try to start a RickRoll.
+            //  When called parameterless, try to start a RickRoll.
             if (abort == null)
             {
                 //  Conditions for start:
@@ -151,8 +221,7 @@ namespace YADB.Modules
                 return;
             }
 
-            //  When called with any parameter at all, 
-            //  Stop the RickRoll.
+            //  When called with any parameter at all, stop ongoing RickRoll.
             if (rolling) await StopRickRoll();
             else await ReplyAsync("Who's Rick-rolling around here?");
         }
@@ -160,6 +229,8 @@ namespace YADB.Modules
         private Task StartRickRoll()
         {
             rolling = true;
+            rollingChannelId = Context.Channel.Id;
+
             //  Start loop thread
             rollThread = new Thread(async () => await RollLoop());
             rollThread.Start();
@@ -178,16 +249,15 @@ namespace YADB.Modules
             await StopRickRoll();
         }
 
-        private Task StopRickRoll()
+        public static Task StopRickRoll()
         {
             rolling = false;
-            ulong channelId = Context.Channel.Id;
-            if (lastRollByChannel.ContainsKey(channelId))
+            if (lastRollByChannel.ContainsKey(rollingChannelId))
             {
-                lastRollByChannel[channelId] = DateTime.Now;
+                lastRollByChannel[rollingChannelId] = DateTime.Now;
             }else
             {
-                lastRollByChannel.Add(channelId, DateTime.Now);
+                lastRollByChannel.Add(rollingChannelId, DateTime.Now);
             }
             return Task.CompletedTask;
         }
@@ -195,18 +265,57 @@ namespace YADB.Modules
         #endregion
         #region Haddaway, What is Love
 
+        private static string HaddawayGamesToString()
+        {
+            string result = "";
+            foreach(var entry in haddawayGames)
+            {
+                result += "Channel " + entry.Key
+                    + ", at index " + entry.Value
+                    + " (" + string.Format("{0:0%}", entry.Value/(float)haddawayLyrics.Length) + " complete)\n";
+            }
+            return result.Substring(0,result.Length-1);
+        }
+
+        public static Task HaddawayStatus(SocketCommandContext context)
+        {
+            string display = "Haddaway status: ";
+            if (haddawayGames == null||haddawayGames.Count==0)
+            {
+                display += "No games running";
+            }
+            else
+            {
+                display += haddawayGames.Count + " games running\n"
+                + HaddawayGamesToString();
+            }
+
+            EmbedBuilder builder = new EmbedBuilder
+            {
+                Color = Constants.SeverityToColor(Constants.MessageSeverity.Info),
+                Description = display
+            };
+
+            //  Send problem message via direct-message to the user            
+            context.Channel.SendMessageAsync("", false, builder.Build());
+
+            return Task.CompletedTask;
+        }
+
         private static string[] haddawayLyrics = new string[]
         {
             "What is love?",
             "Baby don't hurt me",
             "Don't hurt me",
             "No more",
-            "Baby don't hurt me, don't hurt me",
+            "Baby don't hurt me",
+            "don't hurt me",
             "No more",
             "What is love?",
             "Yeah",
             "I don't know why you're not fair",
-            "I give you my love, but you don't care",
+            "I give you my love",
+            "but you don't care",
             "So what is right and what is wrong?",
             "Gimme a sign",
             "What is love?",
@@ -217,9 +326,12 @@ namespace YADB.Modules
             "Baby don't hurt me",
             "Don't hurt me",
             "No more",
-            "Oh, I don't know, what can I do?",
-            "What else can I say, it's up to you",
-            "I know we're one, just me and you",
+            "Oh, I don't know",
+            "what can I do?",
+            "What else can I say",
+            "it's up to you",
+            "I know we're one",
+            "just me and you",
             "I can't go on",
             "What is love?",
             "Baby don't hurt me",
@@ -237,8 +349,10 @@ namespace YADB.Modules
             "No more",
             "Don't hurt me",
             "Don't hurt me",
-            "I want no other, no other lover",
-            "This is our life, our time",
+            "I want no other",
+            "no other lover",
+            "This is our life",
+            "our time",
             "We are together I need you forever",
             "Is it love?",
             "What is love?",
@@ -249,7 +363,7 @@ namespace YADB.Modules
             "Baby don't hurt me",
             "Don't hurt me",
             "No more",
-            "Yeah, yeah,\n(woah-woah-woah, oh, oh)\n(Woah-woah-woah, oh, oh)",
+            "Yeah, yeah,\n(woah-woah-woah, oh, oh)\n(woah-woah-woah, oh, oh)",
             "What is love?",
             "Baby don't hurt me",
             "Don't hurt me",
@@ -266,25 +380,162 @@ namespace YADB.Modules
             "No more",
             "What is love?"
         };
+        
+        /// <summary>
+        /// Key: channelId
+        /// Value: current lyric index
+        /// </summary>
+        private static Dictionary<ulong, int> haddawayGames;
 
-        private static int haddawayIndex;
-
-        [Command("what is love")]
-        [Remarks("baby don't hurt me")]
-        [MinPermissions(AccessLevel.User)]
-        public async Task Haddaway([Remainder]string lyric = null)
+        /// <summary>
+        /// 2017-8-24
+        /// Indicates if the bot is currently playing the lyric-game on the channel
+        /// provided.
+        /// </summary>
+        public static bool IsPlayingHaddawayGameOnChannel(ulong channelId)
         {
-            //  TODO
-            //  Game -- alternate entering lyrics
-            //  Game continues as long as text is 90% accurate
-            //  haddawayIndex indicates progress
+            return haddawayGames != null
+                && haddawayGames.ContainsKey(channelId);
+        }
+
+        /// <summary>
+        /// 2017-8-24
+        /// Rules
+        /// Game of alternate entering lyrics
+        /// Game continues as long as text is 90% accurate
+        /// </summary>
+        public static Task StartHaddaway(SocketCommandContext context, [Remainder]string lyric)
+        {
+            //  Lazy initialize the game library
+            if (haddawayGames == null) haddawayGames = new Dictionary<ulong, int>();
+
+            //  When game is already playing on this channel, do nothing
+            if (haddawayGames.ContainsKey(context.Channel.Id)) return Task.CompletedTask;
+
+            //  When the lyric isn't the first line of the song, do nothing
+            if (GetMatchAccuracy(haddawayLyrics[0], lyric) < 0.8) return Task.CompletedTask;
+
+            //  Otherwise, start a game
+            context.Channel.SendMessageAsync(haddawayLyrics[1]);
+            haddawayGames.Add(context.Channel.Id, 2);
 
             //  NOTE
             //  To capture input without requiring the command,
             //  This code needs to be moved to a service like CleverChat
-            //  and then input intercepted in the CommandHandler.
+            //  and then input intercepted in the CommandHandler.   
 
-            await ReplyAsync("baby don't hurt me");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 2017-8-24
+        /// Assumes it has already been confirmed there is a game in progress
+        /// on the provided channelId. Probably using IsPlayingHaddawayGameOnChannel()
+        /// </summary>
+        /// <param name="channelId">channel Id where the game is confirmed to be running</param>
+        /// <param name="userLyric">lyrics entered by user</param>
+        /// <returns></returns>
+        public static Task UpdateHaddawayGame(SocketCommandContext context, [Remainder]string userLyric)
+        {
+            //  lyric index the user must match
+            ulong channelId = context.Channel.Id;
+            int currentIndex = haddawayGames[channelId];
+            string currentLyric = haddawayLyrics[currentIndex];
+
+            float matchPercent = GetMatchAccuracy(currentLyric, userLyric);
+
+            //  Yes, check for end game twice. Because depending on who has
+            //  the last line, end game can occur before the bot's line
+            //  (when the player has the last line) or after the bot's line
+            //  (when the bot has the last line).
+            if (matchPercent > 0.8)
+            {
+                //  Check for end game
+                if (haddawayGames[channelId] >= haddawayLyrics.Length)
+                {
+                    //  You win
+                    context.Channel.SendMessageAsync("We did the whole song!! Awesome!");
+                    haddawayGames.Remove(channelId);
+                    return Task.CompletedTask;
+                }
+
+                //  Continue game
+                haddawayGames[channelId]++;
+                string displayLyric = haddawayLyrics[haddawayGames[channelId]];
+                haddawayGames[channelId]++;
+                context.Channel.SendMessageAsync(displayLyric);
+
+                //  Check for end game
+                if (haddawayGames[channelId]>=haddawayLyrics.Length) {
+                    //  You win
+                    context.Channel.SendMessageAsync("We did the whole song!! Awesome!");
+                    haddawayGames.Remove(channelId);
+                    return Task.CompletedTask;
+                }
+            }
+            else
+            {
+                //  game over
+                string display;
+                float successRatio = currentIndex / (float)haddawayLyrics.Length;
+                if (currentIndex > 2)
+                {
+                    if (successRatio < 0.6)
+                    {
+                        display = "Aw, we made it less than " + string.Format("{0:0%}", successRatio) + " of the song!";
+                    }
+                    else
+                    {
+                        display = "Not bad! We got more than " + string.Format("{0:0%}", successRatio) + " of the way through the song!";
+                    }
+                    context.Channel.SendMessageAsync(display);
+                }
+                haddawayGames.Remove(channelId);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 2017-8-24
+        /// Returns the match percentage, from 0 to 1.
+        /// Uses the Levenshtein distance calculation to deterimine accurace.
+        /// Ref: https://en.wikipedia.org/wiki/Levenshtein_distance
+        /// </summary>
+        public static float GetMatchAccuracy(string left, string right)
+        {
+            left = left.ToLower();
+            right= right.ToLower();
+
+            int n = left.Length;
+            int m = right.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            //  Exit conditions
+            if (n == 0) return m;
+            if (m == 0) return n;
+
+            //  Iterate the strings
+            for (int i = 0; i <= n; d[i, 0] = i++) ;
+            for (int j = 0; j <= m; d[0, j] = j++) ;
+
+            //  Magic
+            for(int i = 1; i <= n; i++)
+            {
+                for(int j = 1; j <= m; j++)
+                {
+                    int cost = (left[i - 1] == right[j - 1]) ? 0 : 1;
+                    d[i, j] = Math.Min(
+                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                        d[i - 1, j - 1] + cost);
+                }
+            }
+
+            //  Levenshtein distance is d[n,m]
+            //  To convert to a percentage, normalize against longest string:
+            //      ("longest length" - "edit distance") / "longest length"
+
+            return (Math.Max(n, m) - d[n, m]) / (float)Math.Max(n, m);
         }
 
         #endregion

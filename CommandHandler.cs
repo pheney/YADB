@@ -65,6 +65,34 @@ namespace YADB
             // Create a new command context.
             var context = new SocketCommandContext(_client, msg);
 
+            #region Special -- Haddaway Game
+
+            //  Only users can start the game
+            if (!context.User.IsBot)
+            {
+                //  When the game is NOT running, always monitor for a chance to start
+                if (!GameModule.IsPlayingHaddawayGameOnChannel(context.Channel.Id))
+                {
+                    //  Try to start game
+                    await GameModule.StartHaddaway(context, msg.Content.Trim());
+
+                    //  When game is running (successfully started) abort further processing
+                    if (GameModule.IsPlayingHaddawayGameOnChannel(context.Channel.Id)) return;
+                }
+                else
+                {
+                    //  The game is already running on this channel       
+
+                    //  First, iterate the game
+                    await GameModule.UpdateHaddawayGame(context, msg.Content.Trim());
+
+                    //  Next, check for game over
+                    if (GameModule.IsPlayingHaddawayGameOnChannel(context.Channel.Id)) return;
+                }
+            }
+
+            #endregion
+
             //  Determine if this is a public channel, or a DM channel
             bool isDMChannel = (context.Channel as IDMChannel) != null;
 
@@ -161,7 +189,15 @@ namespace YADB
                 !hasMentionPrefix &&
                 !hasNickPrefix &&
                 !hasCmdNickPrefix) return;
-            
+
+            //  SPECIAL
+            //  If the bot is Rick-Rolling on the current channel, then abort the rick roll
+            if (GameModule.IsRickRollingOnChannel(context.Channel.Id))
+            {
+                await GameModule.StopRickRoll();
+                return;
+            }
+
             //  Attempt to parse whatever was said as a command
             var result = await _cmds.ExecuteAsync(context, argPos);
                         
