@@ -126,12 +126,8 @@ namespace YADB
             //  NO Prefix, sub-command prefix --> user fumbled bot prefix, offer help
             //  NO Prefix, NO sub-command prefix --> not a message to the bot
 
-            #region Check for commandPrefix, e.g., "!"
-            //  Check if the message has any of the command prefixes
-
             int argPos = 0;
-
-            #endregion
+            /*
             #region Check for UsernamePrefix, e.g., "Pqq"
             //  Check if the message has bot's username prefix
 
@@ -189,9 +185,13 @@ namespace YADB
                 !hasMentionPrefix &&
                 !hasNickPrefix &&
                 !hasCmdNickPrefix) return;
+            */
+
+            if (!HasAnyAttentionFlag(context, msg, ref argPos)) return;
 
             //  SPECIAL
-            //  If the bot is Rick-Rolling on the current channel, then abort the rick roll
+            //  If the bot is Rick-Rolling, any incoming message 
+            //  on the same channel will abort the rick roll.
             if (GameModule.IsRickRollingOnChannel(context.Channel.Id))
             {
                 await GameModule.StopRickRoll();
@@ -256,6 +256,75 @@ namespace YADB
         }
 
         /// <summary>
+        /// 2017-8-24
+        /// Indicates if the SocketUserMessage has any of the flag used to get the 
+        /// bot's attention, i.e.,
+        ///     username
+        ///     mention
+        ///     nickname
+        ///     short nickname ("!" + first two letters of nickname)
+        /// </summary>
+        private bool HasAnyAttentionFlag(SocketCommandContext context, SocketUserMessage msg, ref int messageStartIndex)
+        {
+            //  the person talking to this bot
+            SocketUser msgAuthor = context.Message.Author;
+
+            //  guild (server) where this message originated
+            SocketGuild authorGuild = context.Guild;
+
+            //  PQQ (this bot)
+            SocketGuildUser botUser = context.Guild.CurrentUser;
+
+            //  All the ways the author can prefix a message to 
+            //  get this bot's attention.
+            string username = botUser.Username;
+            string mention = botUser.Mention;
+            string nickname = botUser.Nickname;
+            string shortNickname = Configuration.Load().Prefix[0] + nickname.Substring(0, 2);
+            
+            bool hasFlagAsUsername = HasAttentionFlag(username, msg, ref messageStartIndex);
+            bool hasFlagAsMention = HasAttentionFlag(mention, msg, ref messageStartIndex);
+            bool hasFlagAsNickname = HasAttentionFlag(nickname, msg, ref messageStartIndex);
+            bool hasFlagAsShortNick = HasAttentionFlag(shortNickname, msg, ref messageStartIndex);
+
+            return hasFlagAsUsername || hasFlagAsMention || hasFlagAsNickname || hasFlagAsShortNick;
+        }
+
+        /// <summary>
+        /// 2017-8-24
+        /// Indicates if the socket message starts with any variation of the provided
+        /// flag, e.g., "nickname" or "nickname " or "nickname," or "nickname, "
+        /// </summary>
+        private bool HasAttentionFlag(string flag, SocketUserMessage socketMessage, ref int index)
+        {
+            string[] flags = GetFlagVariations(flag);
+            bool hasFlag = false;
+            foreach (var f in flags)
+            {
+                //  Only check flags that have something in them.
+                //  Skip empty flag, such as "" and whitespace flags such as " ".
+                if (!string.IsNullOrWhiteSpace(f))
+                {
+                    hasFlag |= socketMessage.HasStringPrefix(f, ref index, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            return hasFlag;
+        }
+
+        /// <summary>
+        /// 2017-8-24
+        /// Returns the four variations of a name:
+        ///     "name"
+        ///     "name "
+        ///     "name,"
+        ///     "name, "
+        /// </summary>
+        private string[] GetFlagVariations(string name)
+        {
+            return new string[] { name, name + " ", name + ",", name + ", " };
+        }
+
+        /// <summary>
         /// 2017-8-20
         /// Message was received from a user in a DM channel.
         /// This message does not need to be check for the command prefixes.
@@ -263,17 +332,17 @@ namespace YADB
         /// </summary>
         private async Task HandleDMCommandAsync(SocketCommandContext context, SocketUserMessage msg)
         {
+            //  the person talking to this bot
+            SocketUser msgAuthor = context.Message.Author;
+
+            //  PQQ (this bot)
+            SocketSelfUser botUser = _client.CurrentUser;
+
             //  Ignore messages from ourself
-            ulong authorId = context.User.Id;
-            ulong userId = _client.CurrentUser.Id;
-            if (authorId == userId) return;
-
-            #region Check for commandPrefix, e.g., "!"
-            //  Check if the message has any of the command prefixes
-
+            if (msgAuthor.Id == botUser.Id) return;
+            
             int argPos = 0;
 
-            #endregion
             #region Check for Username Prefix, e.g., "Pqq"
             //  Check if the message has bot's username prefix
 
@@ -304,7 +373,7 @@ namespace YADB
             List<SocketGuild> guilds = context.Client.Guilds.ToList();
             foreach (SocketGuild guild in guilds)
             {
-                SocketGuildUser guildUser = guild.GetUser(userId);
+                SocketGuildUser guildUser = guild.GetUser(botUser.Id);
                 string nickname = guildUser.Nickname;
                 if (string.IsNullOrWhiteSpace(nickname)) continue;
 
