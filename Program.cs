@@ -17,7 +17,7 @@ namespace YADB
     ///     DONE -- Add verbosity levels to console output, including colors
     ///     DONE -- Redirect !Help output to a private message
     ///     DONE -- Filter !Help results based on user access level
-    ///     #### -- Integrate OED module from my thesaurus console application.
+    ///     DONE -- Integrate OED module from my thesaurus console application.
     /// Ref: https://discord.foxbot.me/docs/api/
     /// Ref: https://forum.codingwithstorm.com/index.php?board=29.0
     /// </summary>
