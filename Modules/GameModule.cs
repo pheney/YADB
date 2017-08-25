@@ -580,5 +580,11 @@ namespace YADB.Modules
         }
 
         #endregion
+        #region Dragon Dice
+        /// I will probably not finish this.
+        /// This bot already does everything I had planned, plus extra.
+        
+
+        #endregion
     }
 }

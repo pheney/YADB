@@ -251,6 +251,18 @@ namespace YADB.Common
     public static class Extensions
     {
         /// <summary>
+        /// 2017-8-25
+        /// Bounds the number by the end points, inclusive.
+        /// Only the return value is bound, the original value is unchanged.
+        /// </summary>
+        public static int Clamp(this int source, int min, int max)
+        {
+            int realMin = Math.Min(min, max);
+            int realMax = Math.Max(min, max);
+            return Math.Min(realMax, Math.Max(realMin, source));
+        }
+
+        /// <summary>
         /// 2017-8-22
         /// </summary>
         public static List<T> AddUnique<T>(this List<T> source, T item)
