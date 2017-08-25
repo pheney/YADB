@@ -373,35 +373,32 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task StartConvo([Remainder]string userName = null)
         {
+            DiscordSocketClient client = Context.Client;
+            SocketGuild guild = client.Guilds.Random();
+            SocketTextChannel channel = guild.TextChannels.Random();
+
             //  select a random user name from main channel
             if (userName == null)
             {
-                DiscordSocketClient client = Context.Client;
-
-                //  Get the bot user ID
-                SocketGuild mainGuild = client.Guilds.First();
-                ulong myUserId = client.CurrentUser.Id;
-                SocketGuildUser botUser = mainGuild.GetUser(myUserId);
-
-                //  Holder for the randomly selected user
-                SocketGuildUser selectedUser = botUser;
-
                 //  Limit the number of attempts to get a random user.
                 //  Re-select when the selected user is the bot itself.
+
+                SocketGuildUser recipientUser = null;
+                ulong botId = client.CurrentUser.Id;
                 int maxAttempts = 10;
                 for (int i = 0; i < maxAttempts; i++)
                 {
-                    selectedUser = GetRandomActiveUser(mainGuild);
-                    if (selectedUser.Id != botUser.Id) break;
+                    recipientUser = GetRandomActiveUser(guild);
+                    if (recipientUser.Id != botId) break;
                 };
 
-                if (selectedUser.Id == botUser.Id)
+                if (recipientUser.Id == botId)
                 {
                     await PMFeedbackAsync("Nobody found to converse with.", MessageSeverity.CriticalOrFailure);
                 }
                 else
                 {
-                    string name = string.IsNullOrWhiteSpace(selectedUser.Nickname) ? selectedUser.Username : selectedUser.Nickname;
+                    string name = string.IsNullOrWhiteSpace(recipientUser.Nickname) ? recipientUser.Username : recipientUser.Nickname;
                     await StartConvo(name);
                 }
                 return;
@@ -409,33 +406,24 @@ namespace YADB.Modules
 
             string response;
             await Chat.GetReply(Constants.Greetings.Random(), out response);
-
-            //  NOTE: this code is copied from IntroductionAsync() 
-            //  and could probably be consolidated.
-
-            DiscordSocketClient _client = Context.Client;
-
-            //  Main channel Id is always the same as the guild Id
-            //  according to Gavin.
-            ulong mainChannelId = _client.Guilds.First().Id;
-            var destinationChannel = _client.GetChannel(mainChannelId) as IMessageChannel;
+                        
             string feedback, details;
 
-            if (destinationChannel == null)
-            {
-                //  User is not in a public channel
+            //if (channel == null)
+            //{
+            //    //  User is not in a public channel
 
-                //  Create feedback message for user 
-                feedback = "Failure: Failed to send message \"{message}\"";
-                feedback = feedback.Replace("{message}", response);
-                details = "Reason: Probably because {channel} channel is not public.";
-                details = details.Replace("{channel}", destinationChannel.Name);
-                await PMReportIssueAsync(feedback, details, MessageSeverity.CriticalOrFailure);
-            }
-            else
-            {
+            //    //  Create feedback message for user 
+            //    feedback = "Failure: Failed to send message \"{message}\"";
+            //    feedback = feedback.Replace("{message}", response);
+            //    details = "Reason: Probably because {channel} channel is not public.";
+            //    details = details.Replace("{channel}", channel.Name);
+            //    await PMReportIssueAsync(feedback, details, MessageSeverity.CriticalOrFailure);
+            //}
+            //else
+            //{
                 //  Send conversation starter
-                await destinationChannel.SendMessageAsync(userName + ", " + response);
+                await channel.SendMessageAsync(userName + ", " + response);
 
                 //  Create feedback message for user
                 feedback = "Message sent: \"{message}\"";
@@ -443,7 +431,7 @@ namespace YADB.Modules
                 details = "To user: {user}";
                 details = details.Replace("{user}", userName);
                 await PMReportIssueAsync(feedback, details, MessageSeverity.Success);
-            }
+            //}
         }
 
         #endregion

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace YADB.Common
 {
@@ -282,6 +283,16 @@ namespace YADB.Common
         public static T Random<T>(this List<T> source)
         {
             return source[Constants.rnd.Next(source.Count)];
+        }
+        
+        /// <summary>
+        /// 2017-8-24
+        /// Select random element from collection.
+        /// Not pretty, but it works fine at human-speed.
+        /// </summary>
+        public static T Random<T>(this IReadOnlyCollection<T> source)
+        {
+            return source.ToList().Random();
         }
 
         /// <summary>
