@@ -1,18 +1,18 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.IO;
 
 namespace YADB
 {
     /// <summary> 
-    /// A file that contains information you either don't want public
+    /// 2017-8-25
+    /// Read and write to files for information you either don't want public
     /// or will want to change without having to compile another bot.
+    /// 
+    /// This object contains general configuration data for the bot, as well as the
+    /// ability to load and save itself.
     /// </summary>
     public class Configuration
     {
-        [JsonIgnore]
-        /// <summary> The location and name of your bot's configuration file. </summary>
-        public static string FileName { get; private set; } = "config/configuration.json";
         /// <summary> Ids of users who will have owner access to the bot. </summary>
         public ulong[] Owners { get; set; }
         /// <summary> Your bot's command prefix. </summary>
@@ -22,43 +22,35 @@ namespace YADB
         /// <summary> Your bot's login token. </summary>
         public string Token { get; set; } = "";
 
+        [JsonIgnore]
+        public static Configuration Get;
+
         public static void EnsureExists()
         {
-            string file = Path.Combine(AppContext.BaseDirectory, FileName);
-            if (!File.Exists(file))                                 // Check if the configuration file exists.
+            //  All files are stored in the 'config' directory
+            string FileName = new Configuration().GetFilename();
+            string file = FileOperations.PathToFile(FileName);
+
+            // When the file does NOT exists, create it
+            if (!FileOperations.Exists(FileName))
             {
-                string path = Path.GetDirectoryName(file);          // Create config directory if doesn't exist.
-                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+                //  Create a new configuration object
+                var config = new Configuration();
 
-                var config = new Configuration();                   // Create a new configuration object.
-
+                //  Manually enter the bot token
                 Console.WriteLine("Please enter your token: ");
-                string token = Console.ReadLine();                  // Read the bot token from console.
-
+                string token = Console.ReadLine();
                 config.Token = token;
-                config.SaveJson();                                  // Save the new configuration object to file.
+
+                //  Save the configuration object
+                FileOperations.SaveAsJson(config);
             }
+
+            Configuration.Get = FileOperations.Load<Configuration>();
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Configuration Loaded");
             Console.ResetColor();
         }
-
-        /// <summary> Save the configuration to the path specified in FileName. </summary>
-        public void SaveJson()
-        {
-            string file = Path.Combine(AppContext.BaseDirectory, FileName);
-            File.WriteAllText(file, ToJson());
-        }
-
-        /// <summary> Load the configuration from the path specified in FileName. </summary>
-        public static Configuration Load()
-        {
-            string file = Path.Combine(AppContext.BaseDirectory, FileName);
-            return JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(file));
-        }
-
-        /// <summary> Convert the configuration to a json string. </summary>
-        public string ToJson()
-            => JsonConvert.SerializeObject(this, Formatting.Indented);
     }
 }

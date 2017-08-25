@@ -50,7 +50,7 @@ namespace YADB
             _client.Log += (l) => AsyncConsoleLog(l);
 
             //  Connect to Discord
-            await _client.LoginAsync(TokenType.Bot, Configuration.Load().Token);
+            await _client.LoginAsync(TokenType.Bot, Configuration.Get.Token);
             await _client.StartAsync();
 
             //  Initialize the command handler service

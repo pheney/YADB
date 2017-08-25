@@ -35,7 +35,7 @@ namespace YADB.Preconditions
             if (c.User.IsBot)                                    // Prevent other bots from executing commands.
                 return AccessLevel.Blocked;
 
-            if (Configuration.Load().Owners.Contains(c.User.Id)) // Give configured owners special access.
+            if (Configuration.Get.Owners.Contains(c.User.Id)) // Give configured owners special access.
                 return AccessLevel.BotOwner;
 
             var user = c.User as SocketGuildUser;                // Check if the context is in a guild.

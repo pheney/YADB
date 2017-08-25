@@ -211,7 +211,7 @@ namespace YADB
                     string submessage = msg.Content.Substring(argPos);
                     string[] words = submessage.Split(' ');
                     bool hasSubprefix = false;
-                    foreach (string subprefix in Configuration.Load().SubPrefix)
+                    foreach (string subprefix in Configuration.Get.SubPrefix)
                     {
                         hasSubprefix |= words[0].StartsWith(subprefix);
                     }
@@ -293,7 +293,7 @@ namespace YADB
                 case CommandError.UnknownCommand:
                     //  Distinguish between chatting and fumbled #commands
                     bool hasSubprefix = false;
-                    foreach (string subprefix in Configuration.Load().SubPrefix)
+                    foreach (string subprefix in Configuration.Get.SubPrefix)
                     {
                         hasSubprefix |= msg.Content.StartsWith(subprefix);
                     }
@@ -376,7 +376,7 @@ namespace YADB
             //  get this bot's attention.
             foreach (var nick in nicknames)
             {
-                string shortNick = Configuration.Load().Prefix[0] + nick.Substring(0, 2);
+                string shortNick = Configuration.Get.Prefix[0] + nick.Substring(0, 2);
                 hasFlagAsNick |= HasAttentionFlag(nick, msg, ref messageStartIndex);
                 hasFlagAsShortNick |= HasAttentionFlag(shortNick, msg, ref messageStartIndex);
             }

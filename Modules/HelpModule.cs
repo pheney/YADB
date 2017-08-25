@@ -74,9 +74,9 @@ namespace YADB.Modules
                 postHelp += "Just make sure to always address me, so I know who you are talking to.\n\n"
                 + "You can address me with my username '"+guildUser.Username+"', "
                 + "my current nickname '"+guildUser.Nickname+"', "
-                + "or '" + Configuration.Load().Prefix[0] + "' "
+                + "or '" + Configuration.Get.Prefix[0] + "' "
                 + "plus the first 2 characters of my nickname, e.g., '"
-                + Configuration.Load().Prefix[0] + Context.Guild.CurrentUser.Nickname.Substring(0, 2)
+                + Configuration.Get.Prefix[0] + Context.Guild.CurrentUser.Nickname.Substring(0, 2)
                 + "'";
             }
 
