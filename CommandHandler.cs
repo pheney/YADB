@@ -155,7 +155,7 @@ namespace YADB
 
             //  send message to console
             string author = msg.Author.Username;
-            string consoleMessage = author + " : " + message;
+            string consoleMessage = author + "> " + message;
             await Program.AsyncConsoleMessage(consoleMessage, ConsoleColor.Cyan);
         }
 

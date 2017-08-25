@@ -6,17 +6,54 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Discord;
+using Newtonsoft.Json;
 
 namespace YADB.Modules
 {
     [Name("Games")]
     public class GameModule : ModuleBase<SocketCommandContext>
     {
+        protected GameModule():base()
+        {
+            if (EightBallData.Get==null) EightBallData.Init();
+        }
+
         #region Magic Eight Ball
 
+        private class EightBallData
+        {
+            [JsonIgnore]
+            public static EightBallData Get;
+
+            public int TotalRolls = 0;
+            
+            public static void Init()
+            {
+                string FileName = new EightBallData().GetFilename();
+                string file = FileOperations.PathToFile(FileName);
+
+                // When the file does NOT exists, create it
+                if (!FileOperations.Exists(FileName))
+                {
+                    //  Create a new configuration object
+                    var data = new EightBallData();
+                    
+                    //  Save the configuration object
+                    FileOperations.SaveAsJson(data);
+                }
+
+                EightBallData.Get = FileOperations.Load<EightBallData>();
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(FileName+" loaded");
+                Console.ResetColor();
+            }
+        }
+        
         public static Task EightBallStatus(SocketCommandContext context)
         {
-            string display = "Magic Eight Ball: " + eightBallRolls + " predictions made";
+            if (EightBallData.Get == null) EightBallData.Init();
+            string display = "Magic Eight Ball: " + EightBallData.Get.TotalRolls + " predictions made";
 
             EmbedBuilder builder = new EmbedBuilder
             {
@@ -29,9 +66,7 @@ namespace YADB.Modules
 
             return Task.CompletedTask;
         }
-
-        private static int eightBallRolls = 0;
-
+        
         private static string[] EightBallResults = new string[]
         {
             "It is certain",
@@ -78,7 +113,8 @@ namespace YADB.Modules
                 await Task.Delay(4500);
 
                 await ReplyAsync("\"" + EightBallResults.Random() + "\"");
-                eightBallRolls++;
+                EightBallData.Get.TotalRolls++;
+                FileOperations.SaveAsJson(EightBallData.Get);
             }
         }
 
