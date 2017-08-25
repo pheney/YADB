@@ -272,6 +272,7 @@ namespace YADB.Modules
             {
                 result += "Channel " + entry.Key
                     + ", at index " + entry.Value
+                    + "/" + haddawayLyrics.Length
                     + " (" + string.Format("{0:0%}", entry.Value/(float)haddawayLyrics.Length) + " complete)\n";
             }
             return result.Substring(0,result.Length-1);
