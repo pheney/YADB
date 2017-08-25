@@ -39,23 +39,12 @@ namespace YADB.Modules
         //  minutes
         private static int attractDelayMin = 2;
         private static int attractDelayMax = 9;
-
-        [Command("#SetDelay"), Alias("#sd")]
-        [Remarks("Set the mininum and maximum delay (in minutes) for the attract message")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task SetAttractDelay(params int[] delay)
+        
+        private async Task SetAttractDelay(int minimum, int maximum)
         {
-            //  When no parameters exist, just show current status
-            if (delay.Length < 2)
-            {
-                await ReportAttractDelay(false);
-                return;
-            }
-
-            int min = delay[0];
-            int max = delay[1];
-
-            //  handle all the stupid delay values
+            int min = Math.Min(minimum, maximum);
+            int max = Math.Max(minimum, maximum);
+            
             string message, details;
 
             //  negative values
@@ -65,16 +54,7 @@ namespace YADB.Modules
                 details = "Details: values must be greater than one.";
                 await PMReportIssueAsync(message, details, MessageSeverity.CriticalOrFailure);
                 return;
-            }
-
-            //  max < min
-            if (max < min)
-            {
-                message = "Delay Change Failed";
-                details = "Details: maximum value must be greater than minimum value.";
-                await PMReportIssueAsync(message, details, MessageSeverity.CriticalOrFailure);
-                return;
-            }
+            }            
 
             //  update the values
             PuppetModule.attractDelayMin = min;
@@ -105,13 +85,42 @@ namespace YADB.Modules
         [Command("#EnableAttract"), Alias("#Ea")]
         [Remarks("Enable / disable unprompted bot conversation starters")]
         [MinPermissions(AccessLevel.BotOwner)]
-        public async Task EnableAttractMode([Remainder]string enabled = null)
+        public async Task SetAttractMode(params string[] settings)
         {
-            bool result, status;
-            result = bool.TryParse(enabled, out status);
-
-            if (result)
+            switch (settings.Length)
             {
+                case 0: //  Request status
+                    await EnableAttractMode();
+                    return;
+                case 1: //  Enable / Disable
+                    bool enabled;
+                    if (bool.TryParse(settings[0], out enabled))
+                    {
+                        await EnableAttractMode(enabled);
+                        return;
+                    }
+                    break;
+                case 2: //  Change delay times
+                    int min, max;
+                    if (int.TryParse(settings[0], out min) &&
+                        int.TryParse(settings[1], out max))
+                    {
+                        await SetAttractDelay(min, max);
+                        return;
+                    }
+                    break;
+                default: // Do nothing
+                    await PMReportIssueAsync("Usage:", "#ea\n#ea true|false\n#ea min max", MessageSeverity.Warning);
+                    break;
+            }   
+        }
+
+        private async Task EnableAttractMode(bool? enabled = null)
+        {
+            if (enabled != null)
+            {
+                bool status = (bool)enabled;
+
                 //  Before doing anything at all, ensure CHAT is enabled
                 if (status && !Chat.ChatStatus)
                 {

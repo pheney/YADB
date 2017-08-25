@@ -220,6 +220,16 @@ namespace YADB
                 return;
             }
 
+            //  SPECIAL
+            //  If the bot is Rick-Rolling, any incoming message 
+            //  on the same channel will abort the rick roll.
+            IDMChannel DMChannel = context.Channel as IDMChannel;
+            if (GameModule.IsRickRollingOnChannel(DMChannel.Id))
+            {
+                await GameModule.StopRickRoll();
+                return;
+            }
+
             //  First, assume user has entered a command.
             //  Try and execute the user input as a command with the given context.
             var result = await _cmds.ExecuteAsync(context, argPos);
