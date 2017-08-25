@@ -23,26 +23,34 @@ namespace YADB
             _client = c;                                                 // Save an instance of the discord client.
             _cmds = new CommandService();                                // Create a new instance of the commandservice.                              
 
+            #region Add Commnand Modules
+
             // Load all modules from the assembly.
             //await _cmds.AddModulesAsync(Assembly.GetEntryAssembly());    
 
             //  Load modules individually.
-            //  Because this project has more modules than I want to use all the time.
             await _cmds.AddModuleAsync<PuppetModule>();
             await _cmds.AddModuleAsync<HelpModule>();
             await _cmds.AddModuleAsync<ModeratorModule>();
             await _cmds.AddModuleAsync<CleanModule>();
             await _cmds.AddModuleAsync<DictionaryModule>();
-            //await _cmds.AddModuleAsync<MathModule>();
             await _cmds.AddModuleAsync<GameModule>();
+            //await _cmds.AddModuleAsync<MathModule>();
 
-            _client.MessageReceived += HandleCommandAsync;               // Register the messagereceived event to handle commands.
+            #endregion
+            #region Event Handlers
 
+            //  Register the command processor
+            _client.MessageReceived += HandleCommandAsync;
+            _client.MessageReceived += EchoTrafficAsync;
+            
             //  Register the user-joined event
             _client.UserJoined += AsyncUserJoined;
 
-            //  Patrick
+            //  Regsiter the handler that announces the bot is online
             //_client.Ready += IntroductionAsync;
+
+            #endregion
         }
 
         /// <summary>
@@ -108,6 +116,47 @@ namespace YADB
                 await HandlePublicCommandAsync(context, msg);
                 return;
             }
+        }
+
+        /// <summary>
+        /// 2017-8-25
+        /// Echos all mention of a specific user to the console. 
+        /// </summary>
+        private async Task EchoTrafficAsync(SocketMessage s)
+        {
+            //  ignore system messages
+            var msg = s as SocketUserMessage;
+            if (msg == null) return;
+
+            var context = new SocketCommandContext(_client, msg);
+            string username = "patrickq";
+            List<string> nicknames = new List<string>();
+
+            //  get all nicknames
+            foreach (var guild in context.Client.Guilds)
+            {
+                List<SocketGuildUser> users = new List<SocketGuildUser>();
+                users = guild.Users.Where(x => x.Username.Equals(username, StringComparison.OrdinalIgnoreCase)).ToList();
+                foreach (var user in users)
+                {
+                    if (string.IsNullOrWhiteSpace(user.Nickname)) continue;
+                    nicknames.Add(user.Nickname);
+                }
+            }
+
+            //  determine if message contains username or any nicknames
+            string message = s.Content;
+            bool contains = s.Content.Contains(username);
+            foreach (string nick in nicknames)
+            {
+                contains |= message.Contains(nick);
+            }
+            if (!contains) return;
+
+            //  send message to console
+            string author = msg.Author.Username;
+            string consoleMessage = author + " : " + message;
+            await Program.AsyncConsoleMessage(consoleMessage, ConsoleColor.Cyan);
         }
 
         #endregion

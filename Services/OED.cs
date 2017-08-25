@@ -86,7 +86,9 @@ namespace YADB.Services
             new DefinedWord("patience", "toleration for stupidity"),
             new DefinedWord("through", "to penetrate", true),
             new DefinedWord("thru", "horrible mispelling of 'through'"),
-            new DefinedWord("threw", "to forcefully project")
+            new DefinedWord("threw", "to forcefully project"),
+            new DefinedWord("any time", "_always use this; it's never wrong_", true),
+            new DefinedWord("anytime", "adverb meaning \"whenever\"; never use with the word \"at\"")
         };
 
         /// <summary>

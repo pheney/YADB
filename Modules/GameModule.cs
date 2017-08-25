@@ -90,7 +90,7 @@ namespace YADB.Modules
             string display = "Rick-roll status: ";
             if (rolling)
             {
-                display += "rolling on channel " + rollingChannelId;
+                display += "rolling on channel " + context.Client.GetChannel(rollingChannelId).ToString();
             }
             else
             {
@@ -98,7 +98,7 @@ namespace YADB.Modules
             }
             if (lastRollByChannel != null && lastRollByChannel.Count>0)
             {
-                display += "\n" + RollingHistoryToString();
+                display += "\n" + RollingHistoryToString(context);
             }
 
             EmbedBuilder builder = new EmbedBuilder
@@ -113,13 +113,13 @@ namespace YADB.Modules
             return Task.CompletedTask;
         }
 
-        private static string RollingHistoryToString()
+        private static string RollingHistoryToString(SocketCommandContext context)
         {
             string result = "";
             foreach (var entry in lastRollByChannel)
             {
-                result += "Channel " + entry.Key
-                    + ", last roll at " + entry.Value.ToLocalTime()+"\n";
+                result += "Channel " + context.Client.GetChannel(entry.Key).ToString()
+                + ", last roll at " + entry.Value.ToLocalTime()+"\n";
             }
             return result.Substring(0, result.Length - 1);
         }
@@ -190,9 +190,9 @@ namespace YADB.Modules
             {
                 //  Conditions for start:
                 //  1. There is not already one going
-                //  2. It has been "awhile" since one happened (on this channel)
+                //  2. It has been "awhile" since one happened on this channel
 
-                //  When there is already a roll going, arbort.
+                //  When there is already a roll going, abort.
                 if (rolling)
                 {
                     await ReplyAsync("(We're already 'rolling baby!)");
@@ -222,6 +222,9 @@ namespace YADB.Modules
             }
 
             //  When called with any parameter at all, stop ongoing RickRoll.
+            //  This can be used from any channel to stop any RickRoll.
+            //  From within a channel currently being rolled, the CommandHandler
+            //  has a listener that stops the roll any time the bot is addressed.
             if (rolling) await StopRickRoll();
             else await ReplyAsync("Who's Rick-rolling around here?");
         }

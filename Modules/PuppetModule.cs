@@ -26,10 +26,19 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task StatusReport()
         {
+            int delayMillis = 100;
             await ChatStatus(false);
+
+            await Task.Delay(delayMillis);
             await AttractStatus(false);
+
+            await Task.Delay(delayMillis);
             await GameModule.RollingStatus(Context);
+
+            await Task.Delay(delayMillis);
             await GameModule.HaddawayStatus(Context);
+
+            await Task.Delay(delayMillis);
             await GameModule.EightBallStatus(Context);
         }
 
