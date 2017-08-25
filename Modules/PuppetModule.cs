@@ -404,34 +404,20 @@ namespace YADB.Modules
                 return;
             }
 
+            //  Generate a greeting
             string response;
-            await Chat.GetReply(Constants.Greetings.Random(), out response);
-                        
+            await Chat.GetReply(Constants.Greetings.Random(), out response);                        
+            
+            //  Send conversation starter
+            await channel.SendMessageAsync(userName + ", " + response);
+
+            //  Create feedback message for user
             string feedback, details;
-
-            //if (channel == null)
-            //{
-            //    //  User is not in a public channel
-
-            //    //  Create feedback message for user 
-            //    feedback = "Failure: Failed to send message \"{message}\"";
-            //    feedback = feedback.Replace("{message}", response);
-            //    details = "Reason: Probably because {channel} channel is not public.";
-            //    details = details.Replace("{channel}", channel.Name);
-            //    await PMReportIssueAsync(feedback, details, MessageSeverity.CriticalOrFailure);
-            //}
-            //else
-            //{
-                //  Send conversation starter
-                await channel.SendMessageAsync(userName + ", " + response);
-
-                //  Create feedback message for user
-                feedback = "Message sent: \"{message}\"";
-                feedback = feedback.Replace("{message}", response);
-                details = "To user: {user}";
-                details = details.Replace("{user}", userName);
-                await PMReportIssueAsync(feedback, details, MessageSeverity.Success);
-            //}
+            feedback = "Message sent: \"{message}\"";
+            feedback = feedback.Replace("{message}", response);
+            details = "To user: {user}";
+            details = details.Replace("{user}", userName);
+            await PMReportIssueAsync(feedback, details, MessageSeverity.Success);       
         }
 
         #endregion
@@ -497,12 +483,35 @@ namespace YADB.Modules
         private async Task AnnounceOnChannelName(string channelName, [Remainder]string message)
         {
             DiscordSocketClient client = Context.Client;
-            IReadOnlyCollection<SocketGuildChannel> channels = client.Guilds.First().Channels;
-            var destinationChannel = channels.Where(c => c.Name.Equals(channelName, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+            List<string> channels = new List<string>();
+            SocketGuildChannel destinationChannel = null;
+
+            //  Find the channel named as the parameter among all the guilds (servers)
+            //  the bot has access to.
+            foreach (SocketGuild guild in client.Guilds)
+            {
+                foreach (SocketGuildChannel guildChannel in guild.TextChannels)
+                {
+                    if (guildChannel.Name.Equals(channelName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        destinationChannel = guildChannel;
+                        break;
+                    }
+                    else
+                    {
+                        string channelDisplay = string.Format("{0} --> {1} : {2}", 
+                            guildChannel.Name,
+                            "(" + guild.Name + ")",
+                            ChannelTypeToString(guildChannel));
+                        channels.Add(channelDisplay);
+                    }
+                }
+                if (destinationChannel != null) break;
+            }
 
             if (destinationChannel == null)
             {
-                //  Channel name was not found.
+                ////  Channel name was not found.
 
                 //  Create feedback message for user
                 string noChannelMessage = "Channel not found: \"{channel}\""
@@ -510,11 +519,10 @@ namespace YADB.Modules
                 noChannelMessage = noChannelMessage
                     .Replace("{channel}", channelName);
 
-                foreach (var c in channels.OrderBy(x => x.Name))
+                channels.Sort();
+                foreach (var c in channels)
                 {
-                    noChannelMessage += "\n  {name} ({type})"
-                        .Replace("{name}", c.Name)
-                        .Replace("{type}", ChannelTypeToString(c));
+                    noChannelMessage += "\n" + c;
                 }
 
                 await PMFeedbackAsync(noChannelMessage, MessageSeverity.Warning);
