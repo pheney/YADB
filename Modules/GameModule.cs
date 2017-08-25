@@ -450,6 +450,8 @@ namespace YADB.Modules
             //  (when the bot has the last line).
             if (matchPercent > 0.8)
             {
+                haddawayGames[channelId]++;
+
                 //  Check for end game
                 if (haddawayGames[channelId] >= haddawayLyrics.Length)
                 {
@@ -460,7 +462,6 @@ namespace YADB.Modules
                 }
 
                 //  Continue game
-                haddawayGames[channelId]++;
                 string displayLyric = haddawayLyrics[haddawayGames[channelId]];
                 haddawayGames[channelId]++;
                 context.Channel.SendMessageAsync(displayLyric);
@@ -480,9 +481,9 @@ namespace YADB.Modules
                 float successRatio = currentIndex / (float)haddawayLyrics.Length;
                 if (currentIndex > 2)
                 {
-                    if (successRatio < 0.6)
+                    if (successRatio < 0.5)
                     {
-                        display = "Aw, we made it less than " + string.Format("{0:0%}", successRatio) + " of the song!";
+                        display = "Aw, we barely made " + string.Format("{0:0%}", successRatio) + " of the song!";
                     }
                     else
                     {

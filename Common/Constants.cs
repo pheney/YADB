@@ -302,8 +302,10 @@ namespace YADB.Common
         {
             conjunction = conjunction ?? "";
             startIndex = startIndex ?? 0;
-            count = count == null ? source.Length : Math.Min((int)count, source.Length);
-            int endIndex = (int)(startIndex + count);
+            int endIndex = source.Length;
+            if (count != null) {
+                endIndex = Math.Min((int)startIndex + (int)count, endIndex);
+            }
 
             string result = "";
             for (int i = (int)startIndex; i < endIndex; i++)
