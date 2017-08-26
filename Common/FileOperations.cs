@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace YADB
 {
@@ -55,7 +56,7 @@ namespace YADB
         /// Save the object in json format.
         /// <return>The file name the object is saved as.</return>
         /// </summary>
-        public static string SaveAsJson<T>(T objectToSave)
+        public static Task SaveAsJson<T>(T objectToSave)
         {
             string filename = objectToSave.GetFilename();
             string file = PathToFile(filename);
@@ -65,7 +66,7 @@ namespace YADB
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
             File.WriteAllText(file, ToJson(objectToSave));
-            return filename;
+            return Task.CompletedTask;
         }
 
         /// <summary>

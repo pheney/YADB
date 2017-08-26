@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Discord;
 using Newtonsoft.Json;
+using YADB.Services;
 
 namespace YADB.Modules
 {
@@ -581,9 +582,15 @@ namespace YADB.Modules
 
         #endregion
         #region Dragon Dice
-        /// I will probably not finish this.
-        /// This bot already does everything I had planned, plus extra.
         
+        [Command("#Quest"), Alias("#q")]
+        [Remarks("Fight dragons")]
+        [MinPermissions(AccessLevel.User)]
+        public async Task Quest()
+        {
+            //  Start a game for the user
+            await DragonDice.StartQuest(Context);
+        }
 
         #endregion
     }

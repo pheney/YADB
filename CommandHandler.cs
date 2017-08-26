@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using YADB.Common;
 using YADB.Modules;
+using YADB.Services;
 
 namespace YADB
 {
@@ -73,6 +74,15 @@ namespace YADB
             // Create a new command context.
             var context = new SocketCommandContext(_client, msg);
 
+            #region Special -- DragonDice Game
+
+            if (!context.User.IsBot&&DragonDice.IsPlaying(context.User.Id))
+            {
+                await DragonDice.ParseUserInput(context, msg.Content);
+                return;
+            }
+
+            #endregion
             #region Special -- Haddaway Game
 
             //  Only users can start the game

@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Discord.Commands;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using YADB.Common;
 
 namespace YADB.Services
@@ -38,21 +41,64 @@ namespace YADB.Services
     /// </summary>
     public static class DragonDice
     {
+        private class DragonDiceData
+        {
+            [JsonIgnore]
+            public static DragonDiceData Get;
+
+            #region Data
+
+            public Dictionary<ulong, Warrior> playerWarriors;
+
+            #endregion
+
+            public static void Init()
+            {
+                string FileName = new DragonDiceData().GetFilename();
+                string file = FileOperations.PathToFile(FileName);
+
+                // When the file does NOT exists, create it
+                if (!FileOperations.Exists(FileName))
+                {
+                    //  Create a new configuration object
+                    var data = new DragonDiceData();
+
+                    //  Save the configuration object
+                    FileOperations.SaveAsJson(data);
+                }
+
+                DragonDiceData.Get = FileOperations.Load<DragonDiceData>();
+                DragonDice.playerWarriors = DragonDiceData.Get.playerWarriors;
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(FileName + " loaded");
+                Console.ResetColor();
+            }
+        }
+
         #region Manage Game-State on a per-user basis
-                
+
+        private static string callToAction = "Make your selection!";
+
         /// <summary>
         /// 2017-8-25
         /// PLAYER ACTION
         /// Generate a dragon Pack, based on player's Warrior.
         /// Present the dragons and ask the player to select one to battle.
         /// </summary>
-        public static void StartQuest(ulong playerId)
+        public static async Task StartQuest(ICommandContext context)
         {
-            Quest quest = GetOrCreateQuest(playerId);
-            Warrior warrior = GetOrCreateWarrior(playerId);
+            ulong playerId = context.User.Id;
+            Quest quest;
+            Warrior warrior;
+
+            await GetOrCreateQuest(playerId, out quest);
+            await GetOrCreateWarrior(playerId, out warrior);
             warrior.Ready();
 
-            ContinueOrAbandonQuest(playerId);
+            await Send(context, "Your warrior is ready!\n");
+            await ParseUserInput(context, "i");
+            await ContinueOrAbandonQuest(context);
         }
 
         /// <summary>
@@ -61,15 +107,65 @@ namespace YADB.Services
         /// wants to battle, OR if he wants to Abandon the Quest.
         /// </summary>
         /// <param name="playerId"></param>
-        public static void ContinueOrAbandonQuest(ulong playerId)
+        private static async Task ContinueOrAbandonQuest(ICommandContext context)
         {
-            //  Present dragon pack and ask player which to fight
-            //  This selection goes to BattleDragon()
-            //  When Continue...
-            int dragonSelection = 0;
-            BattleDragon(playerId, dragonSelection);
-            //  When End...
-            AbandonQuest(playerId);
+            ulong playerId = context.User.Id;
+            Quest quest;
+            await GetOrCreateQuest(playerId, out quest);
+            int choices = quest.GetDragonChoices.Length;
+            string questStatus = "Your warrior must slay " + choices + " dragons to complete this quest.";
+            string instructions = "Select which dragon to battle, or you can abort the quest.";
+            string options = "";
+            for (int i = 0; i < choices; i++)
+            {
+                int choiceId = i + 1;
+                Dragon d = quest.GetDragonChoices[i];
+                options += choiceId + ": " + d.Info() + "\n";
+            }
+            options += "A: Abandon quest";
+
+            string message = questStatus + " " + instructions + "\n\n"
+                + options + "\n\n"
+                + callToAction;
+            await Send(context, message);
+        }
+
+        /// <summary>
+        /// 2017-8-25
+        /// Handles the repsonses to the message from ContinueOrAbandonQuest()
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="choice"></param>
+        /// <returns></returns>
+        public static async Task ParseQuestAction(ICommandContext context, string choice)
+        {
+            string errorMessage = "Without a valid answer, or I must assume you don't want "
+                    + "to play anymore.";
+
+            if (string.IsNullOrWhiteSpace(choice))
+            {
+                await Send(context, errorMessage+" "+callToAction);
+                //  TODO
+                //  count invalid answers, after 3 Abandon Quest
+                //await AbandonQuest(context);
+                return;
+            }
+
+            if (choice.Equals("a", StringComparison.OrdinalIgnoreCase))
+            {
+                //  Abandon quest
+                await AbandonQuest(context);
+                return;
+            }
+
+            int selection;
+            if(int.TryParse(choice, out selection))
+            {
+                await BattleDragon(context, selection);
+                return;
+            }
+
+            await Send(context, errorMessage);
         }
 
         /// <summary>
@@ -81,81 +177,117 @@ namespace YADB.Services
         /// </summary>
         /// <param name="playerId"></param>
         /// <param name="dragonSelection"></param>
-        public static void BattleDragon(ulong playerId, int dragonSelection)
+        private static async Task BattleDragon(ICommandContext context, int dragonSelection)
         {
-            Quest quest = GetOrCreateQuest(playerId);
-            quest.SelectDragonIndex(dragonSelection);
-            Dragon dragon = quest.CurrentDragon;
-            Warrior warrior = GetOrCreateWarrior(playerId);
+            ulong playerId = context.User.Id;
 
+            Quest quest;
+            await GetOrCreateQuest(playerId, out quest);
+            quest.SelectDragonIndex(dragonSelection-1);
+            Dragon dragon = quest.CurrentDragon;
+
+            Warrior warrior;
+            await GetOrCreateWarrior(playerId, out warrior);
+
+            int delayMillis = 300;
             //  Execute the battle, display each round
             do
             {
-                Clash(warrior, dragon);
+                await Task.Delay(delayMillis);
+                int[] damage = Clash(warrior, dragon);
+                int damageToWarrior = damage[0];
+                int damageToDragon = damage[1];
+
+                //  Show die results
+                await Send(context, "Warrior rolls: " + warrior.DiceRollsToString());
+                await Task.Delay(delayMillis);
+                await Send(context, "Dragon rolls: " + dragon.DiceRollsToString());
+                await Task.Delay(delayMillis);
+
+                //  Summarize outcome
+                string action = "";
+                if (damageToDragon > 0) action += "Warrior hits for " + damageToDragon;
+                if (damageToWarrior > 0)
+                {
+                    if (action.Length > 0) action += " and the ";
+                    else action += "The ";
+                    action += "dragon breaths fire for " + damageToWarrior + "!";
+                }
+                await Send(context, action);
+                await Task.Delay(delayMillis);
+
+                //  Apply the results
+                warrior.Damage(damageToWarrior);
+                dragon.Damage(damageToDragon);
+
                 //  Show results of the round to the player
-                //  TODO
+                string status = "Warrior health: " + warrior.Health + " Dragon health: " + dragon.Health+"\n\n";
+                await Send(context, status);
 
             } while (GetResult(warrior, dragon).Equals(BattleOutcome.Continue));
             
-            //  Player either won or lost
+            //  When the player wins
             if (GetResult(warrior, dragon).Equals(BattleOutcome.Win))
             {
-                //  Player won
                 if (quest.IsComplete)
                 {
-                    WinQuest(playerId);
+                    await WinQuest(context);
+                    return;
                 } else
                 {
                     //  Player must decide to continue or end quest
-                    ContinueOrAbandonQuest(playerId);
+                    await ContinueOrAbandonQuest(context);
+                    return;
                 }
-            }else
-            {
-                //  Player lost
-                LoseQuest(playerId);
             }
-        }
 
-        private static void WinQuest(ulong playerId)
-        {
-            Quest quest = GetOrCreateQuest(playerId);
-            Warrior warrior = GetOrCreateWarrior(playerId);
-            //  Award Full Quest XP
-            warrior.AwardXP(quest.XP);
-            //  Player may have the option to level up
-            if (warrior.ReadyToLevelUp())
-            {
-                //  Player may decide to level up
-                //  TODO
-
-                //  Get player LevelUp training priority: 
-                //  focus on attack (4) vs defense (0), or some where in between?
-                //  TODO
-                warrior.LevelUp(2);
-            }
-            playerQuests.Remove(playerId);
-        }
-
-        private static void LoseQuest(ulong playerId)
-        {
-            playerQuests.Remove(playerId);
-        }
-
-        /// <summary>
-        /// 2017-8-25
-        /// PLAYER ACTION
-        /// Player has elected to end the Quest.
-        /// This also occurs when the player disconnects during a battle.
-        /// </summary>
-        /// <param name="playerId"></param>
-        public static void AbandonQuest(ulong playerId)
-        {
-            Quest quest = GetOrCreateQuest(playerId);
-            Warrior warrior = GetOrCreateWarrior(playerId);
-            warrior.AwardXP(quest.XP / 2);
-            playerQuests.Remove(playerId);
+            //  When the player loses
+            await EndQuest(context);            
         }
         
+        private static async Task WinQuest(ICommandContext context)
+        {
+            await Send(context, "Congratulations! You completed your quest!");
+            ulong playerId = context.User.Id;
+
+            Quest quest;
+            await GetOrCreateQuest(playerId, out quest);
+
+            Warrior warrior;
+            await GetOrCreateWarrior(playerId, out warrior);
+
+            await Task.Delay(450);
+
+            //  Award Full Quest XP
+            int xp = quest.XP;
+            await Send(context, "Your warrior earned " + xp +" experience!"); ;
+            warrior.AwardXP(xp);
+            
+            await EndQuest(context);
+        }
+
+        private static string[] trainingChoices = new string[]
+        {   "Full defensive fighter (maximum protection, no offense improvement)",
+            "Mostly defense",
+            "Balanced fighter (equal protection and offensive improvement)",
+            "Mostly offense",
+            "Full offense fighter (no protection, maximum offense improvement)"
+        };
+
+        private static async Task WarriorLevelUp(ICommandContext context)
+        {
+            string levelUp = "Your warrior has gained valuable insight!";
+            string trainingPriority = "Select the type of training your warrior will learn:";
+            string options = "";
+            for (int i = 0; i < trainingChoices.Length; i++)
+            {
+                options += (i + 1) + ": " + trainingChoices[i] + "\n";
+            }
+
+            await Send(context, levelUp + " " + trainingPriority + "\n" + options + "\n" + callToAction);
+
+        }
+
         /// <summary>
         /// 2017-8-25
         /// PLAYER ACTION
@@ -166,24 +298,116 @@ namespace YADB.Services
         /// </summary>
         /// <param name="playerId"></param>
         /// <param name="warriorType"></param>
-        public static void LevelUp(ulong playerId, int training)
+        public static async Task ParseLevelUpAction(ICommandContext context, string choice)
         {
-            GetOrCreateWarrior(playerId).LevelUp(training);
+            int trainingIndex = 2;
+            int.TryParse(choice, out trainingIndex);
+
+            Warrior warrior;
+            await GetOrCreateWarrior(context.User.Id, out warrior);
+            warrior.LevelUp(trainingIndex);
+            await FileOperations.SaveAsJson(DragonDiceData.Get);
+        }
+        
+        /// <summary>
+        /// 2017-8-25
+        /// PLAYER ACTION
+        /// Player has elected to end the Quest.
+        /// This also occurs when the player disconnects during a battle.
+        /// </summary>
+        /// <param name="playerId"></param>
+        public static async Task AbandonQuest(ICommandContext context)
+        {
+            ulong playerId = context.User.Id;
+            Quest quest;
+            await GetOrCreateQuest(playerId, out quest);
+
+            Warrior warrior;
+            await GetOrCreateWarrior(playerId, out warrior);
+
+            warrior.AwardXP(quest.XP / 2);
+            await EndQuest(context);
+        }
+
+        private static async Task EndQuest(ICommandContext context)
+        {
+            ulong playerId = context.User.Id;
+            Warrior warrior;
+            await GetOrCreateWarrior(playerId, out warrior);
+
+            playerQuests.Remove(playerId);
+            if (warrior.ReadyToLevelUp()) await WarriorLevelUp(context);
+
+            await Send(context, "Your quest has ended.");
+        }
+        
+        /// <summary>
+        /// 2017-8-25
+        /// Indicates if the player ID is actively playing
+        /// </summary>
+        /// <param name="playerId"></param>
+        /// <returns></returns>
+        public static bool IsPlaying(ulong playerId)
+        {
+            return playerQuests != null && playerQuests.ContainsKey(playerId);
+        }
+
+        public static async Task ParseUserInput(ICommandContext context, string input)
+        {
+            if (input.Equals("i", StringComparison.OrdinalIgnoreCase))
+            {
+                Warrior warrior;
+                await GetOrCreateWarrior(context.User.Id, out warrior);
+                await Send(context, "Warrior, Level " + warrior.Level+", Health: " + warrior.Health);
+
+                Quest quest;
+                await GetOrCreateQuest(context.User.Id, out quest);
+                await Send(context, "Dragons remaining: " + quest.GetDragonChoices.Length);
+                return;
+            }
+
+            //  Determine which input handler to use
+            if (playerQuests.ContainsKey(context.User.Id))
+            {
+                //  Currently in a quest
+                await ParseQuestAction(context, input);
+                return;
+            }
+            else
+            {
+                //  Quest just ended
+                await ParseLevelUpAction(context, input);
+                return;
+            }
+
+            //  default error
+            await Send(context, "That is not a valid choice.");
+        }
+
+        #endregion
+        #region Message Helpers
+        
+        private static async Task Send(ICommandContext context, string message)
+        {
+            await context.Channel.SendMessageAsync(message);
         }
 
         #endregion
         #region Helpers
 
         private static Dictionary<ulong, Quest> playerQuests;
-        private static Quest GetOrCreateQuest(ulong playerId)
+        private static Task GetOrCreateQuest(ulong playerId, out Quest quest)
         {
+            if (playerQuests == null) playerQuests = new Dictionary<ulong, Quest>();
             if (!playerQuests.ContainsKey(playerId))
             {
-                Warrior warrior = GetOrCreateWarrior(playerId);
-                Quest quest = new Quest(playerId, warrior.Level);
-                playerQuests.Add(playerId, quest);
+                Warrior warrior = null;
+                GetOrCreateWarrior(playerId, out warrior);
+                Quest q = new Quest(playerId, warrior.Level);
+                playerQuests.Add(playerId, q);
             }
-            return playerQuests[playerId];
+            quest = playerQuests[playerId];
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -199,20 +423,30 @@ namespace YADB.Services
         /// If the player does not have a warrior created, this
         /// creates a new one, inserts it in the dictionary, and returns it;
         /// </summary>
-        private static Warrior GetOrCreateWarrior(ulong playerId)
+        private static Task GetOrCreateWarrior(ulong playerId, out Warrior warrior)
         {
+            if (playerWarriors == null)
+            {
+                DragonDiceData.Init();
+                playerWarriors = DragonDiceData.Get.playerWarriors;
+            }
+
+            if (playerWarriors == null) playerWarriors = new Dictionary<ulong, Warrior>();
+
             if (!playerWarriors.ContainsKey(playerId))
             {
                 playerWarriors.Add(playerId, new Warrior(playerId));
             }
-            return playerWarriors[playerId];
+
+            warrior=playerWarriors[playerId];
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// 2017-8-25
         /// Conducts a round of battle. This modifies both the Warrior and Dragon objects.
         /// </summary>
-        private static void Clash(Warrior warrior, Dragon dragon)
+        private static int[] Clash(Warrior warrior, Dragon dragon)
         {
             //  Randomize both characters
             warrior.Roll();
@@ -235,10 +469,8 @@ namespace YADB.Services
                 damageToWarrior = warrior.Fires + dragon.Fires - warrior.Shields;
                 damageToWarrior = Math.Max(0, damageToWarrior);
             }
-
-            //  Apply damage
-            warrior.Damage(damageToWarrior);
-            dragon.Damage(damageToDragon);
+            
+            return new int[] { damageToWarrior, damageToDragon };
         }
 
         private enum BattleOutcome { Win, Lose, Continue }
@@ -262,8 +494,11 @@ namespace YADB.Services
             public Dragon[] GetDragonChoices { get { return Dragons.ToArray(); } }
             public int XP;
 
+            //  constructor
             public Quest(ulong playerId, int characterLevel)
             {
+                this.PlayerId = playerId;
+
                 //  Every 3rd level, packSize increases by 1
                 int packSize = 2 + (int)Math.Floor(characterLevel / 3f);
 
@@ -290,6 +525,7 @@ namespace YADB.Services
                 int dragonLevel = (int)Math.Floor(characterLevel / 2f) + 1;
 
                 //  all packs have 3 dragons
+                Dragons = new List<Dragon>();
                 Dragons.Add(new Dragon(characterLevel, easy));
                 Dragons.Add(new Dragon(characterLevel, medium));
                 Dragons.Add(new Dragon(characterLevel, hard));
@@ -327,6 +563,8 @@ namespace YADB.Services
         }
 
         public enum Faces { Shield, Sword, Fire, Dragon, Mountain }
+
+        [System.Serializable]
         private class Die
         {
             public Faces[] Sides;
@@ -338,6 +576,7 @@ namespace YADB.Services
             }
         }
         
+        [System.Serializable]
         public class Warrior
         {
             public int Level { get { return dice.Count - 2; } }
@@ -352,7 +591,7 @@ namespace YADB.Services
             private List<Die> dice;
             private List<int> types;
 
-            //  ctr
+            //  constructor
             public Warrior(ulong playerId)
             {
                 this.playerId = playerId;
@@ -414,6 +653,17 @@ namespace YADB.Services
             {
                 foreach (var d in dice) d.Roll();
             }
+
+            public string DiceRollsToString()
+            {
+                string result = "";
+                for (int i = 0; i < dice.Count; i++)
+                {
+                    result += dice[i].Result.ToString();
+                    if (i < dice.Count - 1) result += ", ";
+                }
+                return result;
+            }
         }
 
         public class Dragon
@@ -428,9 +678,10 @@ namespace YADB.Services
 
             private List<Die> dice = new List<Die>();
 
-            //  ctr
+            //  constructor
             public Dragon(int level, int danger)
             {
+                level += 2;
                 for (int i = 0; i < level; i++)
                 {
                     dice.Add(MakeDragonDie(danger));
@@ -449,6 +700,22 @@ namespace YADB.Services
             public void Roll()
             {
                 foreach (var d in dice) d.Roll();
+            }
+
+            public string Info()
+            {
+                return "Dragon level " + Level + ", danger " + (XP - Level-2);
+            }
+
+            public string DiceRollsToString()
+            {
+                string result = "";
+                for (int i = 0; i < dice.Count; i++)
+                {
+                    result += dice[i].Result.ToString();
+                    if (i < dice.Count - 1) result += ", ";
+                }
+                return result;
             }
         }
         
