@@ -76,7 +76,7 @@ namespace YADB
 
             #region Special -- DragonDice Game
 
-            if (!context.User.IsBot&&DragonDice.IsPlaying(context.User.Id))
+            if (!context.User.IsBot && DragonDice.IsPlaying(context.User.Id))
             {
                 await DragonDice.ParseUserInput(context, msg.Content);
                 return;

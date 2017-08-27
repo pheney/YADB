@@ -21,6 +21,7 @@ namespace YADB.Modules
 
         #region Magic Eight Ball
 
+        [Serializable]
         private class EightBallData
         {
             [JsonIgnore]
@@ -115,7 +116,7 @@ namespace YADB.Modules
 
                 await ReplyAsync("\"" + EightBallResults.Random() + "\"");
                 EightBallData.Get.TotalRolls++;
-                FileOperations.SaveAsJson(EightBallData.Get);
+                await FileOperations.SaveAsJson(EightBallData.Get);
             }
         }
 
