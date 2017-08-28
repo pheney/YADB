@@ -263,7 +263,7 @@ namespace YADB.Services
                         break;
                     case "d":
                         await GetOrCreateQuest(context.User.Id, out quest);
-                        await Send(context, "Currently fighting a " + quest.CurrentDragon.Description());
+                        await Send(context, "Currently fighting a " + quest.CurrentDragon.Description);
                         break;
                     case "r":
                         await GetOrCreateQuest(context.User.Id, out quest);
@@ -306,9 +306,9 @@ namespace YADB.Services
             {
                 int choiceId = i + 1;
                 Dragon d = quest.GetDragonChoices[i];
-                options += choiceId + " : the " + d.Description() + "\n";
+                options += "**"+choiceId + "** : a " + d.Description + "\n";
             }
-            options += "\nA : Abandon quest";
+            options += "**a** : Abandon quest";
 
             string message = options + "\n\n" + callToAction;
             await Send(context, message);
@@ -325,7 +325,7 @@ namespace YADB.Services
             await Task.Delay(delayMillis);
             string message = "You are in the middle of a hunt. You may take the following "
                 + "actions:\n\n";
-            foreach (var c in huntCommands) message += c[0] + " : " + c[1] + "\n";
+            foreach (var c in huntCommands) message += "**"+c[0] + "** : " + c[1] + "\n";
             await Send(context, message);
         }
 
@@ -375,7 +375,7 @@ namespace YADB.Services
 
             //  Execute a round of battle
 
-            await Send(context, "_Searching for the " + quest.CurrentDragon.Description() + "_\n\n");
+            await Send(context, "_Searching for the " + quest.CurrentDragon.Description + "_\n\n");
 
             int[] damage = Clash(warrior, dragon);
             int damageToWarrior = damage[0];
@@ -427,7 +427,7 @@ namespace YADB.Services
             //  When the player wins
             if (GetResult(warrior, dragon).Equals(BattleOutcome.Win))
             {
-                await Send(context, "Warrior defeated the " + quest.CurrentDragon.Description() + "!");
+                await Send(context, "Warrior defeated the " + quest.CurrentDragon.Description + "!");
                 quest.DragonDefeated();
                 await Task.Delay(delayMillis);
 
@@ -674,8 +674,12 @@ namespace YADB.Services
             private ulong PlayerId;
             private List<Dragon> Dragons;
 
+            public enum QuestLevel { Normal, Tough, Adventurous, Heroic, Epic }
+            public QuestLevel questLevel;
+
             public enum QuestState { Complete, Hunting, Ready }
             public QuestState State;
+
             public bool IsHunting { get { return State.Equals(QuestState.Hunting); } }
             public bool IsComplete { get { return State.Equals(QuestState.Complete); } }
             public Dragon CurrentDragon { get { return Dragons[0]; } }
@@ -687,51 +691,27 @@ namespace YADB.Services
             {
                 this.PlayerId = playerId;
 
-                //  Every 3rd level, pack size increases by 1
-                int packSize = Constants.rnd.Next(3) + (int)Math.Floor(characterLevel / 3f);
+                questLevel = (QuestLevel)Math.Min(Math.Floor(characterLevel / 3f), 4);
 
-                //  Pack size must be at least 1
-                packSize = Math.Max(1, packSize);
-
+                //  Every quest has 1-3 dragons
+                int packSize = 1 + Constants.rnd.Next(3);
+                
                 //  Pack size should not exceed character level
                 packSize = Math.Min(packSize, characterLevel);
 
-                //  0 is easy, 2 is medium, 4 is hard
-                int easy = 0;
-                int medium = 2;
-                int hard = 4;
+                int questToPart = 5 - (int)questLevel;
+                int maxSize = 7 - questToPart;
 
-                //  Goal values for remainder:
-                //      character level 1 -> 0
-                //      character level 2 -> 1
-                //      character level 3 -> 2
-                int remainder = (characterLevel - 1) % 3;
-                switch (remainder)
+                List<int> dragonSizes = new List<int>();
+                for (int i = 0; i < maxSize; i++) dragonSizes.Add(i);
+
+                //  create dragons
+                Dragons = new List<Dragon>();
+                for (int i = 0; i < packSize; i++)
                 {
-                    case 0: //  do nothing
-                        break;
-                    case 1:
-                        if (Constants.rnd.NextDouble() < 0.5) easy++;
-                        else medium++;
-                        break;
-                    case 2:
-                        easy++;
-                        if (Constants.rnd.NextDouble() < 0.5) medium++;
-                        else hard++;
-                        break;
-                }
-                int dragonLevel = (int)Math.Floor(characterLevel / 2f) + 1;
-
-                //  all packs have 3 dragons
-                Dragons = new List<Dragon>();                
-                Dragons.Add(new Dragon(characterLevel, easy));
-                if (packSize>1)Dragons.Add(new Dragon(characterLevel, medium));
-                if (packSize>2)Dragons.Add(new Dragon(characterLevel, hard));
-
-                //  extra dragons for large packs
-                for (int i = 3; i < packSize; i++)
-                {
-                    Dragons.Add(new Dragon(characterLevel, Constants.rnd.Next(6)));
+                    int size = dragonSizes.Random();
+                    dragonSizes.Remove(size);
+                    Dragons.Add(new Dragon((int)questLevel, size));
                 }
 
                 State = QuestState.Ready;
@@ -886,12 +866,12 @@ namespace YADB.Services
         private class Dragon
         {
             //  Indicates number of parts per die (5-1)
-            private static string[] DragonParts = new string[] {
+            private static string[] QuestLevel = new string[] {
                 "dangerous", "fearsome", "elder", "ancient", "legendary"
             };
 
             //  Indicates number of fires per die (0-5)
-            private static string[] DragonFires = new string[] {
+            private static string[] DragonLevel = new string[] {
                 "common", "large", "huge,", "great", "gigantic", "colossal"
             };
             
@@ -902,58 +882,54 @@ namespace YADB.Services
             public int Health { get { return dice.Count; } }
             public bool IsDead { get { return Health == 0; } }
             public int XP { get; private set; }
+            public string Description { get; private set; }
 
-            private List<Die> dice = new List<Die>();
+            private List<Die> dice;
 
             /// <summary>
-            /// CONSTRUCTOR
-            /// Dragon Dice are created as follows.
+            /// 2017-8-28
+            /// Dragons are created as follows. Each die is generated using the 
+            /// following rules.
             /// 
-            /// Age: 1 (mature) .. 4 (legendary)
-            ///     This is determins the number of "Dragon" parts that appear on each die.
-            ///     The number of parts is 5 - age.
+            /// questLevel: 0..4
+            ///     Determines the number of "Dragon" parts that appear on each die.
+            ///     The number of parts = 5 - questLevel
             ///     
-            /// Size: 0 (large) .. 5 (colossal)
-            ///     This is the number of "Fire" sides on each die.
-            ///     This cannot exceed 6 - Danger.
-            ///     The remainder of 6 - Danger - Size = number of Mountain sides.
+            /// dragonLevel: 0..5
+            ///     Determines the number of "Fire" sides on each die.
+            ///     This cannot exceed 6 - questLevel.
+            ///     This cannot exceed questLevel +1.
+            ///     Quests that have multiple dragons should have different dragonLevels
+            ///         for each dragon.
+            ///         
+            /// The remainder of 6 - questLevel - dragonLevel is the number of "Mountain" sides on each die.
             ///     
-            /// Examples:
-            ///     Danger 4, Size 0: 4 Dragon, 2 Mountain (this is an easy dragon)
-            ///     Danger 4, Size 2: 4 Dragon, 2 Fire (this is a hard dragon)
-            ///     Danger 1, Size 4: 1 Dragon, 4 Fire, 1 Mountain (this is a very hard dragon)
-            ///     Danger 1, Size 5: 1 Dragon, 5 Fire (this is an impossible dragon)
             /// </summary>
-            /// <param name="characterLevel">warrior level, starts at 1 and goes up unbounded</param>
-            /// <param name="dragonLevel">the three dragons: easy (blue), medium (green), hard (red)</param>
-            /// <param name="questDifficulty">normal/challenge</param>
-            public Dragon(int characterLevel, int dragonLevel, int questDifficulty)
+            /// <param name="questLevel">Quest Level, 0..4</param>
+            /// <param name="dragonLevel">Dragon level, 0..5 (small, med, large)</param>
+            /// <returns></returns>
+            public Dragon(int questLevel, int dragonLevel)
             {
-                //  characterLevel
-                int mountains = 0;
+                //  How many health the dragon has (health = number of dice)
+                int health = 3;
 
-                //  dragonLevel (0,1,2)
-                int fires = 0;
+                //  Design the dice
 
-                //  questDifficulty
-                int dragon = 0;
+                //  QL 0 -> 5 parts, QL 2 -> 3 parts, QL 4 -> 1 part
+                int partPerDie = 5 - questLevel;
+                int firePerDie = dragonLevel;
+                int mountain = 6 - (partPerDie + firePerDie);
+                if (mountain < 0) health += -mountain;
 
-                characterLevel += 2;
-                for (int i = 0; i < characterLevel; i++)
+                //  Create the dice
+                dice = new List<Die>();
+                for (int i = 0; i < health; i++)
                 {
-                    dice.Add(MakeDragonDie(dragon, fires, mountains));
+                    dice.Add(MakeDragonDie(partPerDie, firePerDie));
                 }
-                XP = dragon + fires + questDifficulty;
-            }
 
-            /// <summary>
-            /// Legacy constructor
-            /// </summary>
-            public Dragon (int characterLevel, int danger)
-            {
-                characterLevel += 2;
-                for (int i = 0; i < characterLevel; i++) dice.Add(MakeDragonDie(characterLevel, danger));
-                XP = characterLevel + danger;
+                XP = 1 + (questLevel + 1) * (dragonLevel + 1);
+                Description = QuestLevel[questLevel] + " " + DragonLevel[dragonLevel] + " dragon";
             }
 
             public void Damage(int damage)
@@ -968,26 +944,7 @@ namespace YADB.Services
             {
                 foreach (var d in dice) d.Roll();
             }
-
-            public string Description()
-            {
-                //  # dragon parts
-                int dragonIndex = 0;
-
-                //  # fires
-                int fireIndex = 0;
-
-                foreach (Die d in dice) {
-                    dragonIndex += d.Sides.Where(x => x.Equals(Faces.Dragon)).Count();
-                    fireIndex += d.Sides.Where(x => x.Equals(Faces.Fire)).Count();
-                }
-
-                dragonIndex /= dice.Count();
-                fireIndex /= dice.Count();                
-                
-                return DragonParts[dragonIndex]+" "+DragonFires[fireIndex] + "  dragon";
-            }
-
+            
             public string DiceRollsToString()
             {
                 string result = "";
@@ -1022,36 +979,14 @@ namespace YADB.Services
         }
 
         /// <summary>
-        /// Original Dragon Dice -- a pretty easy game
-        /// Easy (4, 0, 2), Medium (4, 1, 1), Hard (4, 2, 0)
-        /// 
-        /// My first version -- a very difficult game
-        /// Easy (2, 0, 4), Medium (2, 2, 2), Hard (2, 4, 0)
+        /// 2017-8-28
+        /// No value checking. Dragon + fire MUST be <= 6.
         /// </summary>
-        private static Die MakeDragonDie(int dragon, int fire, int mountain)
+        private static Die MakeDragonDie(int dragon, int fire)
         {
-            List<Faces> sides = new List<Faces>();
-
-            for (int i = 0; i < fire; i++) sides.Add(Faces.Fire);
-            for (int i = 0; i < dragon; i++) sides.Add(Faces.Dragon);
-            for (int i = 0; i < mountain; i++) sides.Add(Faces.Mountain);
-
-            return new Die
-            {
-                Sides = sides.ToArray()
-            };
-        }
-
-        /// <summary>
-        /// Legacy
-        /// </summary>
-        private static Die MakeDragonDie(int level, int danger)
-        {
-            int fire = danger.Clamp(1, 4);
-            int dragon = (6 - fire).Clamp(1, 2);
             int mountain = 6 - fire - dragon;
-
             List<Faces> sides = new List<Faces>();
+
             for (int i = 0; i < fire; i++) sides.Add(Faces.Fire);
             for (int i = 0; i < dragon; i++) sides.Add(Faces.Dragon);
             for (int i = 0; i < mountain; i++) sides.Add(Faces.Mountain);
