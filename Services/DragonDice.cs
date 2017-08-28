@@ -82,6 +82,14 @@ namespace YADB.Services
 
         #region External Access
 
+        private static string[] rules = new string[] {
+            "Defeat dragons to earn XP and level up.",
+            "Each dragon you defeat during a quest, doubles the XP of previous dragons defeated on the same quest.",
+            "Quests can be abandoned, but grant reduced XP.",
+            "Battles can be abandoned. This will grant 0 XP for the battle, and abandon the quest.",
+            "Dying ends a quest and the warrior loses a level."
+        };
+
         /// <summary>
         /// 2017-8-25
         /// Entry point into the game.
@@ -89,14 +97,10 @@ namespace YADB.Services
         /// Generate a quest based on the character.
         /// Begin the game loop.
         /// </summary>
-        public static async Task StartQuest(ICommandContext context)
+        public static async Task StartGame(ICommandContext context)
         {
             ulong playerId = context.User.Id;
-
-            //  Create a quest
-            Quest quest;
-            await GetOrCreateQuest(playerId, out quest);
-
+            
             //  Create (or load) the player's warrior
             Warrior warrior;
             await GetOrCreateWarrior(playerId, out warrior);
@@ -105,10 +109,19 @@ namespace YADB.Services
             warrior.Ready();
 
             //  Welcome message
-            await Send(context, "Your warrior is ready!");
+            string welcomeMessage = "Welcome! Go on a quest, "
+                + "fight dragons and don't die.\n\n";
+
+            //  Instructions
+            foreach (var c in rules) welcomeMessage += "**>** " + c + "\n";
 
             //  Write current warrior stats
-            await ParseInfoAction(context, "w");
+            welcomeMessage += "\nYour warrior is ready! Warrior is level " + warrior.Level + ", and has " + warrior.Health + " health, and " + warrior.Experience + " XP.";
+            await Send(context, welcomeMessage);
+
+            //  Create a quest
+            Quest quest;
+            await GetOrCreateQuest(playerId, out quest);
 
             await DisplayReadyChoices(context);
         }
@@ -174,6 +187,11 @@ namespace YADB.Services
             {
                 await AbandonQuest(context);
                 return;
+            }
+
+            if (choice.Equals("r", StringComparison.OrdinalIgnoreCase))
+            {
+                await ChangeQuest(context.User.Id);
             }
 
             int selection;
@@ -278,6 +296,12 @@ namespace YADB.Services
 
         private static string callToAction = "Make your selection!";
 
+        private static string[][] readyCommands = new string[][]
+        {
+            new string[] {"g", "Generate a new quest"},
+            new string[] {"a", "Abandon the quest"}
+        };
+
         /// <summary>
         /// 2017-8-25
         /// Preset players wth remaining dragons and ask which the player
@@ -292,14 +316,15 @@ namespace YADB.Services
             int choices = quest.GetDragonChoices.Length;
 
             //  Narrate state
-            string questStatus = "Your warrior must slay " + choices + " dragons to complete this quest.";
-            string instructions = "Select which dragon to battle, or you can abort the quest.";
-            await Send(context, questStatus + " " + instructions);
+            string questStatus = "Your warrior must slay " + choices
+                + " dragon" + (choices > 1 ? "s" : "") 
+                + " to complete this quest.";
 
             //  Display quest status
-            await ParseInfoAction(context, "r");
-            await Task.Delay(delayMillis);
-
+            string remaining = "There are " + quest.GetDragonChoices.Length 
+                + " dragon" + (quest.GetDragonChoices.Length > 1 ? "s" : "") 
+                + " remaining on this quest.";
+                        
             //  Display user options
             string options = "";
             for (int i = 0; i < choices; i++)
@@ -308,16 +333,17 @@ namespace YADB.Services
                 Dragon d = quest.GetDragonChoices[i];
                 options += "**"+choiceId + "** : a " + d.Description + "\n";
             }
-            options += "**a** : Abandon quest";
+            options += "\n";
+            foreach (var c in readyCommands) options += "**" + c[0] + "** : " + c[1] + "\n";
 
-            string message = options + "\n\n" + callToAction;
-            await Send(context, message);
+            string message = options + "\n" + callToAction;
+            await Send(context, questStatus + " " + remaining+"\n\n"+message);
         }
 
         private static string[][] huntCommands = new string[][]
         {
-            new string[] {"s", "Search for the dragon"},
-            new string[] {"a","Abandon the quest"}
+            new string[] {"c", "Continue the fight"},
+            new string[] {"a", "Abandon the quest"}
         };
 
         private static async Task DisplayHuntChoices(ICommandContext context)
@@ -592,6 +618,18 @@ namespace YADB.Services
                 playerQuests.Add(playerId, q);
             }
             quest = playerQuests[playerId];
+            return Task.CompletedTask;
+        }
+
+        private static Task ChangeQuest(ulong playerId)
+        {
+            if (playerQuests != null
+                && playerQuests.ContainsKey(playerId))
+            {
+                playerQuests.Remove(playerId);
+                Quest q;
+                GetOrCreateQuest(playerId, out q);
+            }
             return Task.CompletedTask;
         }
 
@@ -872,7 +910,7 @@ namespace YADB.Services
 
             //  Indicates number of fires per die (0-5)
             private static string[] DragonLevel = new string[] {
-                "common", "large", "huge,", "great", "gigantic", "colossal"
+                "common", "large", "huge", "great", "gigantic", "colossal"
             };
             
             public int Level { get { return dice.Count - 2; } }

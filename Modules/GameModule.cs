@@ -590,7 +590,7 @@ namespace YADB.Modules
         public async Task Quest()
         {
             //  Start a game for the user
-            await DragonDice.StartQuest(Context);
+            await DragonDice.StartGame(Context);
         }
 
         #endregion
