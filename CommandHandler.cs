@@ -78,7 +78,7 @@ namespace YADB
 
             if (!context.User.IsBot && DragonDice.IsPlaying(context.User.Id))
             {
-                await DragonDice.ParseUserInput(context, msg.Content);
+                await DragonDice.HandleInput(context, msg.Content);
                 return;
             }
 
