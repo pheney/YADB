@@ -151,6 +151,9 @@ namespace YADB.Services
             Quest quest;
             await GetOrCreateQuest(playerId, out quest);
 
+            if (input.Equals("show dice")) quest.ShowResults = true;
+            if (input.Equals("hide dice")) quest.ShowResults = false;
+
             switch (quest.State)
             {
                 case Quest.QuestState.Ready:
@@ -189,7 +192,7 @@ namespace YADB.Services
                 return;
             }
 
-            if (choice.Equals("r", StringComparison.OrdinalIgnoreCase))
+            if (choice.Equals("g", StringComparison.OrdinalIgnoreCase))
             {
                 await ChangeQuest(context.User.Id);
             }
@@ -409,12 +412,15 @@ namespace YADB.Services
             int fire = quest.CurrentDragon.Fires + warrior.Fires;
 
             //  Show die results
-            await Task.Delay(delayMillis);
-            await Send(context, "Warrior rolls: " + warrior.DiceRollsToString() +
-                "\nDragon rolls: " + dragon.DiceRollsToString());
-            await Task.Delay(delayMillis);
+            if (quest.ShowResults)
+            {
+                await Task.Delay(delayMillis);
+                await Send(context, "Warrior rolls: " + warrior.DiceRollsToString() +
+                    "\nDragon rolls: " + dragon.DiceRollsToString());
+            }
 
             //  Narrate outcome
+            await Task.Delay(delayMillis);
             string narration;
             if (damageToDragon > 0 || fire > 0)
             {
@@ -721,10 +727,11 @@ namespace YADB.Services
         private class Quest
         {
             private ulong PlayerId;
+            public bool ShowResults;
             private List<Dragon> Dragons;
 
             public enum QuestLevel { Normal, Tough, Adventurous, Heroic, Epic }
-            public QuestLevel questLevel;
+            private QuestLevel questLevel;
 
             public enum QuestState { Complete, Hunting, Ready }
             public QuestState State;
@@ -739,12 +746,13 @@ namespace YADB.Services
             public Quest(ulong playerId, int characterLevel)
             {
                 this.PlayerId = playerId;
+                ShowResults = false;
 
                 questLevel = (QuestLevel)Math.Min(Math.Floor(characterLevel / 3f), 4);
 
                 //  Every quest has 1-3 dragons
                 int packSize = 1 + Constants.rnd.Next(3);
-                
+
                 //  Pack size should not exceed character level
                 packSize = Math.Min(packSize, characterLevel);
 
@@ -792,6 +800,8 @@ namespace YADB.Services
                 if (Dragons.Count > 0) State = QuestState.Ready;
                 else State = QuestState.Complete;
             }
+
+            public string Description { get { return questLevel.ToString(); } }
         }
 
         private enum Faces { Shield, Sword, Fire, Dragon, Mountain }
@@ -982,7 +992,7 @@ namespace YADB.Services
             public Dragon(int questLevel, int dragonLevel)
             {
                 //  How many health the dragon has (health = number of dice)
-                int health = 3;
+                int health = 3 + questLevel;
 
                 //  Design the dice
 
