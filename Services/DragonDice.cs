@@ -151,8 +151,8 @@ namespace YADB.Services
             Quest quest;
             await GetOrCreateQuest(playerId, out quest);
 
-            if (input.Equals("show dice")) quest.ShowResults = true;
-            if (input.Equals("hide dice")) quest.ShowResults = false;
+            if (input.Equals("show dice", StringComparison.OrdinalIgnoreCase)) quest.ShowResults = true;
+            if (input.Equals("hide dice", StringComparison.OrdinalIgnoreCase)) quest.ShowResults = false;
 
             switch (quest.State)
             {
@@ -184,19 +184,19 @@ namespace YADB.Services
             await GetOrCreateQuest(context.User.Id, out quest);
 
             //  When the quest is "ready" 
-            //  the options are "abort" and the number of the dragon to hunt.
+            //  The options are "regenerate quest," "abort," and the number of the dragon to hunt.
 
-            if (choice.Equals("a", StringComparison.OrdinalIgnoreCase))
-            {
-                await AbandonQuest(context);
-                return;
-            }
-
-            if (choice.Equals("g", StringComparison.OrdinalIgnoreCase))
+            if (choice.Equals(readyCommands[0][0], StringComparison.OrdinalIgnoreCase))
             {
                 await ChangeQuest(context.User.Id);
             }
 
+            if (choice.Equals(readyCommands[1][0], StringComparison.OrdinalIgnoreCase))
+            {
+                await AbandonQuest(context);
+                return;
+            }
+            
             int selection;
             if (int.TryParse(choice, out selection))
             {
@@ -260,40 +260,7 @@ namespace YADB.Services
                 await DisplayLevelUpChoices(context);
             }
         }
-
-        /// <summary>
-        /// Not used
-        /// </summary>
-        private static async Task ParseInfoAction(ICommandContext context, string choice)
-        {
-            string commands = "";
-            foreach (var h in infoCommands) commands += h[0];
-            if (commands.Contains(choice))
-            {
-                Warrior warrior;
-                Quest quest;
-
-                switch (choice)
-                {
-                    case "i":
-                        await HelpInfo(context);
-                        break;
-                    case "w":
-                        await GetOrCreateWarrior(context.User.Id, out warrior);
-                        await Send(context, "Warrior is level " + warrior.Level + ", and has " + warrior.Health + " health, and " + warrior.Experience + " XP.");
-                        break;
-                    case "d":
-                        await GetOrCreateQuest(context.User.Id, out quest);
-                        await Send(context, "Currently fighting a " + quest.CurrentDragon.Description);
-                        break;
-                    case "r":
-                        await GetOrCreateQuest(context.User.Id, out quest);
-                        await Send(context, "There are " + quest.GetDragonChoices.Length + " dragons remaining on this quest.");
-                        break;
-                }
-            }
-        }
-
+        
         #endregion
         #region Display Info
 
@@ -316,16 +283,19 @@ namespace YADB.Services
             ulong playerId = context.User.Id;
             Quest quest;
             await GetOrCreateQuest(playerId, out quest);
+            int required = quest.Required;
             int choices = quest.GetDragonChoices.Length;
 
             //  Narrate state
-            string questStatus = "Your warrior must slay " + choices
-                + " dragon" + (choices > 1 ? "s" : "") 
+            bool single = quest.GetDragonChoices.Length == 1;
+            string questStatus = "Your warrior must slay " + required
+                + " "+ (single ? "dragons" : "dragon")
                 + " to complete this quest.";
 
             //  Display quest status
-            string remaining = "There are " + quest.GetDragonChoices.Length 
-                + " dragon" + (quest.GetDragonChoices.Length > 1 ? "s" : "") 
+            string remaining = "There " +(single?"is":"are")
+                + " "+choices 
+                + " " + (single ? "dragons" : "dragon")
                 + " remaining on this quest.";
                         
             //  Display user options
@@ -377,7 +347,7 @@ namespace YADB.Services
                 options += (i + 1) + ": " + trainingChoices[i] + "\n";
             }
 
-            string instruction = "You must choose a number from 1 through 5.";
+            string instruction = "Choose a number from 1 through 5.";
             await Send(context, levelUp + " " + trainingPriority + "\n\n" + options + "\n" + instruction);
         }
 
@@ -740,6 +710,7 @@ namespace YADB.Services
             public bool IsComplete { get { return State.Equals(QuestState.Complete); } }
             public Dragon CurrentDragon { get { return Dragons[0]; } }
             public Dragon[] GetDragonChoices { get { return Dragons.ToArray(); } }
+            public int Required { get; private set; }
             public int XP;
 
             //  constructor
@@ -771,6 +742,7 @@ namespace YADB.Services
                     Dragons.Add(new Dragon((int)questLevel, size));
                 }
 
+                Required = packSize;
                 State = QuestState.Ready;
             }
 
