@@ -330,21 +330,21 @@ namespace YADB.Services
 
         private static string[] trainingChoices = new string[]
         {
-            "Offense fighter: maximum offense, no defense",
+            "Offense fighter (maximum offense, no defense)",
             "Mostly offense",
-            "Balanced fighter: equal offensive and defense",
+            "Balanced fighter (equal offensive and defense)",
             "Mostly defense",
-            "Defensive fighter: no offense, maximum defense"
+            "Defensive fighter (no offense, maximum defense)"
         };
         
         private static async Task DisplayLevelUpChoices(ICommandContext context)
         {
-            string levelUp = "Your warrior has gained a level!";
+            string levelUp = "\nYour warrior has gained a level!";
             string trainingPriority = "Select the type of training your warrior will learn:";
             string options = "";
             for (int i = 0; i < trainingChoices.Length; i++)
             {
-                options += (i + 1) + ": " + trainingChoices[i] + "\n";
+                options += "**"+(i + 1) + "** : " + trainingChoices[i] + "\n";
             }
 
             string instruction = "Choose a number from 1 through 5.";

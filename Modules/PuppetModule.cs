@@ -78,7 +78,7 @@ namespace YADB.Modules
             message = message
                 .Replace("{min}", PuppetModule.attractDelayMin.ToString())
                 .Replace("{max}", PuppetModule.attractDelayMax.ToString());
-            string details = "Attract status: " + (PuppetModule.attractEnabled ? "enabled." : "disabled");
+            string details = "(Attract currently " + (PuppetModule.attractEnabled ? "enabled." : "disabled")+")";
             MessageSeverity severity = attractEnabled ? MessageSeverity.Success : MessageSeverity.CriticalOrFailure;
             if (!changed) severity = MessageSeverity.Info;
             await PMReportIssueAsync(message, details, severity);
@@ -96,13 +96,15 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task SetAttractMode(params string[] settings)
         {
+            int min, max;
+            bool enabled;
+
             switch (settings.Length)
             {
                 case 0: //  Request status
                     await EnableAttractMode();
                     return;
                 case 1: //  Enable / Disable
-                    bool enabled;
                     if (bool.TryParse(settings[0], out enabled))
                     {
                         await EnableAttractMode(enabled);
@@ -110,7 +112,6 @@ namespace YADB.Modules
                     }
                     break;
                 case 2: //  Change delay times
-                    int min, max;
                     if (int.TryParse(settings[0], out min) &&
                         int.TryParse(settings[1], out max))
                     {
@@ -118,8 +119,18 @@ namespace YADB.Modules
                         return;
                     }
                     break;
+                case 3: //  Set delay times and enable or disable
+                    if (int.TryParse(settings[0], out min) &&
+                        int.TryParse(settings[1], out max)&&
+                        bool.TryParse(settings[2], out enabled))
+                    {
+                        await SetAttractDelay(min, max);
+                        await EnableAttractMode(enabled);
+                        return;
+                    }
+                    break;
                 default: // Do nothing
-                    await PMReportIssueAsync("Usage:", "#ea\n#ea true|false\n#ea min max", MessageSeverity.Warning);
+                    await PMReportIssueAsync("Usage:", "#ea\n#ea true|false\n#ea min max\n#ea min max true|false", MessageSeverity.Warning);
                     break;
             }   
         }
