@@ -360,11 +360,11 @@ namespace YADB.Services
 
         private static string[] trainingChoices = new string[]
         {
-            "Offense fighter: maximum offense improvement, no protection",
+            "Offense fighter: maximum offense, no defense",
             "Mostly offense",
-            "Balanced fighter: equal offensive and protection improvement",
+            "Balanced fighter: equal offensive and defense",
             "Mostly defense",
-            "Defensive fighter: no offense improvement, maximum protection"
+            "Defensive fighter: no offense, maximum defense"
         };
         
         private static async Task DisplayLevelUpChoices(ICommandContext context)
