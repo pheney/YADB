@@ -113,7 +113,7 @@ namespace YADB.Services
                 + "fight dragons. Don't die.\n\n";
 
             //  Instructions
-            foreach (var c in rules) welcomeMessage += "**<>** " + c + "\n";
+            foreach (var c in rules) welcomeMessage += "**\\*** " + c + "\n";
 
             //  Write current warrior stats
             welcomeMessage += "\nYour warrior is ready! Warrior is level " + warrior.Level + ", and has " + warrior.Health + " health, and " + warrior.Experience + " XP.";
@@ -213,8 +213,8 @@ namespace YADB.Services
         private static async Task ParseHuntAction(ICommandContext context, string choice)
         {
             string commands = "";
-            foreach (var h in huntCommands) commands += h[0];
-            if (commands.Contains(choice))
+            foreach (var h in huntCommands) commands += h[0].ToLower();
+            if (commands.Contains(choice.ToLower()))
             {
                 if (choice.Equals(huntCommands[0][0], StringComparison.OrdinalIgnoreCase))
                 {
@@ -289,13 +289,13 @@ namespace YADB.Services
             //  Narrate state
             bool single = quest.GetDragonChoices.Length == 1;
             string questStatus = "Your warrior must slay " + required
-                + " "+ (single ? "dragons" : "dragon")
+                + " "+ (single ? "dragon" : "dragons")
                 + " to complete this quest.";
 
             //  Display quest status
             string remaining = "There " +(single?"is":"are")
                 + " "+choices 
-                + " " + (single ? "dragons" : "dragon")
+                + " " + (single ? "dragon" : "dragons")
                 + " remaining on this quest.";
                         
             //  Display user options
@@ -431,7 +431,6 @@ namespace YADB.Services
             {
                 await Send(context, "Warrior defeated the " + quest.CurrentDragon.Description + "!");
                 quest.DragonDefeated();
-                await Task.Delay(delayMillis);
 
                 if (quest.IsComplete)
                 {
@@ -440,6 +439,7 @@ namespace YADB.Services
                 }
                 else
                 {
+                    await Task.Delay(delayMillis);
                     //  Player must decide to continue or end quest
                     await DisplayReadyChoices(context);
                     return;
@@ -459,23 +459,18 @@ namespace YADB.Services
 
         private static async Task WinQuest(ICommandContext context)
         {
-            await Send(context, "Congratulations! You completed your quest!");
             ulong playerId = context.User.Id;
-
             Quest quest;
             await GetOrCreateQuest(playerId, out quest);
-
-            await Task.Delay(delayMillis);
-
-            //  Award Full Quest XP
             int xp = quest.XP;
-            await Send(context, "Your warrior earned " + xp + " experience!"); ;
-
             Warrior warrior;
             await GetOrCreateWarrior(playerId, out warrior);
             warrior.AwardXP(xp);
 
-            await Task.Delay(delayMillis);
+            string congrats = "\nCongratulations! You completed your quest!";            
+            string xpAward = "Your warrior earned " + xp + " experience!";
+            await Send(context, congrats + " " + xpAward);
+            
             await EndQuest(context);
         }
 
@@ -498,14 +493,13 @@ namespace YADB.Services
             int xp = quest.XP / 2;
             await Send(context, "Your warrior earned " + xp + " experience."); ;
             warrior.AwardXP(xp);
-
-            await Task.Delay(delayMillis);
+            
             await EndQuest(context);
         }
 
         private static async Task LoseQuest(ICommandContext context)
         {
-            string message = "Your warrior was killed. ";
+            string message = "Your warrior was killed. Resurrecton has a price... ";
 
             ulong playerId = context.User.Id;
             Warrior warrior;
@@ -517,7 +511,6 @@ namespace YADB.Services
             }
 
             await Send(context, message);
-            await Task.Delay(delayMillis);
             await EndQuest(context);
         }
 
