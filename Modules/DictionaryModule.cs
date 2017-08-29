@@ -14,7 +14,7 @@ namespace YADB.Modules
             + "Try the Root (unconjugated) form of the word. "
             + "The root form is the infinitive form with \"to\" removed, "
             + "i.e., swimming -> to swim -> swim. For nouns, try removing all "
-            + "prefixes and suffixes, i.e., anthropocentrism -> anthorpocentric.";
+            + "prefixes and suffixes, i.e., anthropocentrism -> anthropocentric.";
 
         [Command("#define"), Alias("#def")]
         [Remarks("Returns the meaning of a word")]

@@ -290,7 +290,7 @@ namespace YADB.Services
             bool single = quest.GetDragonChoices.Length == 1;
             string questStatus = "Your warrior must slay " + required
                 + " "+ (single ? "dragon" : "dragons")
-                + " to complete this quest.";
+                + " to complete this "+quest.Description.ToLower()+" quest.";
 
             //  Display quest status
             string remaining = "There " +(single?"is":"are")

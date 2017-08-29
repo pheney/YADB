@@ -415,7 +415,24 @@ namespace YADB.Modules
 
             //  Generate a greeting
             string response;
-            await Chat.GetReply(Constants.Greetings.Random(), out response);                        
+            switch (rnd.Next(9))
+            {
+                case 0:
+                    response = "Anybody need a magic **#8ball**?";
+                    break;
+                case 1:
+                    response = "Who wants to go on an _adventure_? I have a #quest all ready to go...";
+                    break;
+                case 2:
+                    response = "Let's play the Haddaway game! You start.";
+                    break;
+                case 3:
+                    response = "#rickroll";
+                    break;
+                default:
+                    await Chat.GetReply(Constants.Greetings.Random(), out response);
+                    break;
+            }
             
             //  Send conversation starter
             await channel.SendMessageAsync(userName + ", " + response);
