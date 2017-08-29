@@ -109,11 +109,11 @@ namespace YADB.Services
             warrior.Ready();
 
             //  Welcome message
-            string welcomeMessage = "Welcome! Go on a quest, "
-                + "fight dragons and don't die.\n\n";
+            string welcomeMessage = "Welcome! Go on a quest and "
+                + "fight dragons. Don't die.\n\n";
 
             //  Instructions
-            foreach (var c in rules) welcomeMessage += "**>** " + c + "\n";
+            foreach (var c in rules) welcomeMessage += "**<>** " + c + "\n";
 
             //  Write current warrior stats
             welcomeMessage += "\nYour warrior is ready! Warrior is level " + warrior.Level + ", and has " + warrior.Health + " health, and " + warrior.Experience + " XP.";
@@ -529,7 +529,18 @@ namespace YADB.Services
 
         private static async Task LoseQuest(ICommandContext context)
         {
-            await Send(context, "Your warrior was killed.");
+            string message = "Your warrior was killed. ";
+
+            ulong playerId = context.User.Id;
+            Warrior warrior;
+            await GetOrCreateWarrior(playerId, out warrior);
+            if (warrior.Level > 1)
+            {
+                warrior.LevelDown();
+                message += "Warrior drops to level " + warrior.Level;
+            }
+
+            await Send(context, message);
             await Task.Delay(delayMillis);
             await EndQuest(context);
         }
@@ -850,26 +861,48 @@ namespace YADB.Services
 
             public bool ReadyToLevelUp()
             {
-                if (Level == 1) return XP >= 4;
-                if (Level == 2) return XP >= 10;
-                if (Level == 3) return XP >= 22;
+                return XP >= GetRequiredXP(Level + 1);
+            }
+
+            /// <summary>
+            /// Returns the total XP required to get to the level parameter.
+            /// </summary>
+            private int GetRequiredXP(int level)
+            {
+                if (level == 1) return 0;
+                if (level == 2) return 4;
+                if (level == 3) return 10;
+                if (level == 4) return 22;
 
                 //  the value of all previous quests up to the current level
                 int required = 4 + 10 + 22;
-                for (int i = 3; i < Level; i++)
+                for (int i = 4; i < level; i++)
                 {
                     required += i + 1;
                     required += i + 1 + i + 2;
                     required += (i + 1) * 2 + i + 3;
                 }
-                
-                return XP >= required;
+                return required;
             }
 
             public void LevelUp(int warriorType = 2)
             {
                 dice.Add(MakeWarriorDie(warriorType));
                 types.Add(warriorType);
+            }
+
+            /// <summary>
+            /// Reduces the warrior's level by 1.
+            /// Removes the last Warrior Die added.
+            /// Reduces the warrior's XP to the mid point of the previous level.
+            /// </summary>
+            public void LevelDown()
+            {
+                if (this.Level == 1) return;
+                int currentLevel = this.Level;
+                int previousLevel = currentLevel - 1;
+                XP = (GetRequiredXP(currentLevel) + GetRequiredXP(previousLevel)) / 2;
+                types.RemoveAt(types.Count - 1);
             }
 
             /// <summary>
