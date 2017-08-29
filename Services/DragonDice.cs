@@ -153,6 +153,21 @@ namespace YADB.Services
 
             if (input.Equals("show dice", StringComparison.OrdinalIgnoreCase)) quest.ShowResults = true;
             if (input.Equals("hide dice", StringComparison.OrdinalIgnoreCase)) quest.ShowResults = false;
+            if (input.StartsWith("delay", StringComparison.OrdinalIgnoreCase))
+            {
+                string[] parameters = input.Split(' ');
+                int millis;
+                if (int.TryParse(parameters[1], out millis)) {
+                    if (millis > 0)
+                    {
+                        delayMillis = millis;
+                        await Send(context, "Inter-message delay set to " + delayMillis);
+                        return;
+                    }
+                }
+                await Send(context, "Invalid usage. Try \"delay millis\" where \"millis\" is a positive integer value (1 second = 1000)");
+                return;
+            }
 
             switch (quest.State)
             {
@@ -726,13 +741,24 @@ namespace YADB.Services
                 List<int> dragonSizes = new List<int>();
                 for (int i = 0; i < maxSize; i++) dragonSizes.Add(i);
 
+                if (Constants.rnd.Next(5) == 0) dragonSizes.Add(maxSize);
+                bool altQuestUsed = false;
+
                 //  create dragons
                 Dragons = new List<Dragon>();
                 for (int i = 0; i < packSize; i++)
                 {
                     int size = dragonSizes.Random();
                     dragonSizes.Remove(size);
-                    Dragons.Add(new Dragon((int)questLevel, size));
+                    if (!altQuestUsed && Constants.rnd.Next(5) == 0)
+                    {
+                        int altQuestLevel = (int)questLevel + (Constants.rnd.Next(2) * 2 - 1);
+                        Dragons.Add(new Dragon(altQuestLevel.Clamp(0, 4), size));
+                    }
+                    else
+                    {
+                        Dragons.Add(new Dragon((int)questLevel, size));
+                    }
                 }
 
                 Required = packSize;
