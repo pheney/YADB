@@ -86,7 +86,7 @@ namespace YADB.Services
             "Defeat dragons to earn XP and level up.",
             "Each dragon you defeat during a quest, doubles the XP of previous dragons defeated on the same quest.",
             "Quests can be abandoned, but grant reduced XP.",
-            "Battles can be abandoned. This will grant 0 XP for the battle, and abandon the quest.",
+            "Battles can be abandoned. This will grant no XP for the battle, and abandon the quest.",
             "Dying ends a quest and the warrior loses a level."
         };
 
