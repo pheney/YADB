@@ -48,12 +48,12 @@ namespace YADB.Modules
         //  minutes
         private static int attractDelayMin = 2;
         private static int attractDelayMax = 9;
-        
+
         private async Task SetAttractDelay(int minimum, int maximum)
         {
             int min = Math.Min(minimum, maximum);
             int max = Math.Max(minimum, maximum);
-            
+
             string message, details;
 
             //  negative values
@@ -63,7 +63,7 @@ namespace YADB.Modules
                 details = "Details: values must be greater than one.";
                 await PMReportIssueAsync(message, details, MessageSeverity.CriticalOrFailure);
                 return;
-            }            
+            }
 
             //  update the values
             PuppetModule.attractDelayMin = min;
@@ -78,7 +78,7 @@ namespace YADB.Modules
             message = message
                 .Replace("{min}", PuppetModule.attractDelayMin.ToString())
                 .Replace("{max}", PuppetModule.attractDelayMax.ToString());
-            string details = "(Attract currently " + (PuppetModule.attractEnabled ? "enabled." : "disabled")+")";
+            string details = "(Attract currently " + (PuppetModule.attractEnabled ? "enabled." : "disabled") + ")";
             MessageSeverity severity = attractEnabled ? MessageSeverity.Success : MessageSeverity.CriticalOrFailure;
             if (!changed) severity = MessageSeverity.Info;
             await PMReportIssueAsync(message, details, severity);
@@ -121,7 +121,7 @@ namespace YADB.Modules
                     break;
                 case 3: //  Set delay times and enable or disable
                     if (int.TryParse(settings[0], out min) &&
-                        int.TryParse(settings[1], out max)&&
+                        int.TryParse(settings[1], out max) &&
                         bool.TryParse(settings[2], out enabled))
                     {
                         await SetAttractDelay(min, max);
@@ -132,7 +132,7 @@ namespace YADB.Modules
                 default: // Do nothing
                     await PMReportIssueAsync("Usage:", "#ea\n#ea true|false\n#ea min max\n#ea min max true|false", MessageSeverity.Warning);
                     break;
-            }   
+            }
         }
 
         private async Task EnableAttractMode(bool? enabled = null)
@@ -223,7 +223,7 @@ namespace YADB.Modules
                         SocketGuild guild = Context.Client.Guilds.First();
                         SocketGuildUser botUser = guild.GetUser(botId);
                         string nickname = botUser.Nickname;
-                        
+
                         //  get the main channel of the guild
                         SocketGuildChannel guildChannel = guild.GetChannel(guild.Id);
                         ITextChannel textChannel = guildChannel as ITextChannel;
@@ -301,7 +301,7 @@ namespace YADB.Modules
             string info = summary + "\n" + details;
             await PMFeedbackAsync(info, severity);
         }
-        
+
         /// <summary>
         /// 2017-8-18
         /// </summary>
@@ -329,15 +329,104 @@ namespace YADB.Modules
         }
 
         /// <summary>
-        /// 2017-8-18
+        /// 2017-8-30
+        /// </summary>
+        /// <returns></returns>
+        private SocketGuild GetRandomGuild()
+        {
+            return Context.Client.Guilds.Random();
+        }
+
+        /// <summary>
+        /// 2017-8-30
+        /// Returns a random guild which the provided user belongs to.
+        /// Returns null if the user does not belong to any guilds the bot can access.
+        /// </summary>
+        private SocketGuild GetRandomGuild(SocketUser user)
+        {
+            SocketGuild selectedGuild = null;
+            var guilds = Context.Client.Guilds.Where(g => g.GetUser(user.Id) != null).ToList();
+            if (guilds != null) selectedGuild = guilds.Random();
+            return selectedGuild;
+        }
+
+        /// <summary>
+        /// 2017-8-30
+        /// Return any online user, other than the bot itself. Return null if
+        /// there are no active users on the server.
         /// </summary>
         private SocketGuildUser GetRandomActiveUser(SocketGuild guild)
         {
-            SocketGuildChannel mainChannel = GetTextChannels(guild).First();
-            IReadOnlyCollection<SocketGuildUser> userList = mainChannel.Users.Where(x => x.Status.Equals(UserStatus.Online)).ToList();
+            IReadOnlyCollection<SocketGuildUser> userList = guild.Users.Where(x => x.Status.Equals(UserStatus.Online)).ToList();
+            if (userList == null || userList.Count == 0) return null;
+
+            int maxAttempts = 30;
             int count = userList.Count();
-            int index = Constants.rnd.Next(count);
-            return userList.ElementAt(index);
+            SocketGuildUser selected = null;
+            ulong selectedId = Constants.BotId;
+
+            //  Limit the number of attempts to get a random user.
+            //  Re-select when the selected user is the bot itself.
+            for (int i = 0; selectedId == Constants.BotId && i < maxAttempts; i++)
+            {
+                int index = Constants.rnd.Next(count);
+                selected = userList.ElementAt(index);
+                selectedId = selected.Id;
+            }
+            return selected;
+        }
+
+        /// <summary>
+        /// 2017-8-30
+        /// </summary>
+        private SocketGuild GetGuildByName(string name)
+        {
+            SocketGuild result = null;
+            foreach (var g in Context.Client.Guilds)
+            {
+                if (g.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    result = g;
+                    break;
+                }
+            }
+            return result;
+        }
+
+        private SocketGuildUser GetUserByName(string name)
+        {
+            SocketGuildUser result = null;
+            foreach (var g in Context.Client.Guilds)
+            {
+                foreach (var u in g.Users)
+                {
+                    if (u.Username.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        result = u;
+                        break;
+                    }
+                    if (result != null) break;
+                }
+            }
+            return result;
+        }
+
+        private SocketGuildChannel GetChannelByName(string name)
+        {
+            SocketGuildChannel result = null;
+            foreach (var g in Context.Client.Guilds)
+            {
+                foreach (var c in g.Channels)
+                {
+                    if (c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        result = c;
+                        break;
+                    }
+                    if (result != null) break;
+                }
+            }
+            return result;
         }
 
         #endregion
@@ -391,7 +480,142 @@ namespace YADB.Modules
         [Command("#StartConvo"), Alias("#sc")]
         [Remarks("Prompt bot to start a conversation")]
         [MinPermissions(AccessLevel.BotOwner)]
-        public async Task StartConvo([Remainder]string userName = null)
+        public async Task StartConvo([Remainder]string message = null)
+        {
+            SocketGuild guild = null;
+            SocketGuildUser user = null;
+            SocketGuildChannel channel = null;
+
+            List<string> split = new List<string>();
+            if (!string.IsNullOrWhiteSpace(message)) split = message.Split(' ').ToList();
+            for (int i = 0; i < Math.Min(3, split.Count); i++)
+            {
+                if (guild == null)
+                {
+                    guild = GetGuildByName(split[i]);
+                    if (guild!=null)split[i] = guild.Name;
+                }
+                if (user == null)
+                {
+                    user = GetUserByName(split[i]);
+                    if(user!=null)split[i] = user.Username;
+                }
+                if (channel == null)
+                {
+                    channel = GetChannelByName(split[i]);
+                    if(channel!=null)split[i] = channel.Name;
+                }
+            }
+            if (guild != null) split.Remove(guild.Name);
+            if (user != null) split.Remove(user.Username);
+            if (channel != null) split.Remove(channel.Name);
+
+            if (split == null || split.Count == 0)
+            {
+                await GetConversationStarter(out message);
+            }
+            else
+            {
+                message = split.ToArray().JoinWith(" ");
+            }
+
+            //  When a channel was found
+            if (channel != null)
+            {
+                //  Find a user from the guild where that channel exists
+                if (user == null) user = GetRandomActiveUser(channel.Guild);
+                await StartConvoWith(user.Username, channel as SocketTextChannel, message);
+                return;
+            }
+
+            //  When a user was found (and NO channel was found)
+            if (user != null)
+            {
+                //  Find a random channel from the user's guild
+                channel = GetTextChannels(user.Guild).Random();
+                await StartConvoWith(user.Username, channel as SocketTextChannel, message);
+                return;
+            }
+
+            //  When a guild was found (and NO user and NO channel was found)
+            if (guild == null)
+            {
+                ////  So, everything was null: user, channel and guild
+
+                //  Find a random guild
+                guild = GetRandomGuild();
+            }
+
+            //  Pick a random user from the guild, and a random text-channel
+            user = GetRandomActiveUser(guild);
+            channel = GetTextChannels(guild).Random();
+            await StartConvoWith(user.Username, channel as SocketTextChannel, message);
+            return;
+        }
+
+        private async Task StartConvoWith(string username, SocketTextChannel channel, string message)
+        {
+            //  Send conversation starter
+            await channel.SendMessageAsync(username + ", " + message);
+
+            //  Create feedback message for user
+            string feedback, details;
+            feedback = "Message sent: \"{message}\"";
+            feedback = feedback.Replace("{message}", message);
+            details = "To user: {user}";
+            details = details.Replace("{user}", username);
+            await PMReportIssueAsync(feedback, details, MessageSeverity.Success);
+        }
+
+        private async Task ProblemWithStartConvo(string reason, SocketGuildUser user, SocketGuild guild, SocketGuildChannel channel, string message)
+        {
+            //  Create error message for user
+            string feedback, details;
+            feedback = "Could not start a conversation using parameters";
+            feedback += "\nReason: " + reason;
+            details = "Username: " + (user == null ? "null" : user.Username);
+            details = "Guild: " + (guild == null ? "null" : guild.Name);
+            details = "Channel: " + (channel == null ? "null" : channel.Name);
+            details = "Message: " + message;
+            await PMReportIssueAsync(feedback, details, MessageSeverity.CriticalOrFailure);
+        }
+
+        private async Task HelpStartConvo()
+        {
+            //  Create help message for user
+            string feedback, details;
+            feedback = "Usage:";
+            details = "#sc [username] [guild] [channel] [message]";
+            await PMReportIssueAsync(feedback, details, MessageSeverity.Info);
+        }
+
+        private Task GetConversationStarter(out string response)
+        {
+            switch (rnd.Next(9))
+            {
+                case 0:
+                    response = "Anybody need a magic **#8ball**?";
+                    break;
+                case 1:
+                    response = "Who wants to go on an _adventure_? I have a **#quest** all ready to go...";
+                    break;
+                case 2:
+                    response = "Let's play the Haddaway game! You start.";
+                    break;
+                case 3:
+                    response = "**#rickroll**";
+                    break;
+                default:
+                    Chat.GetReply(Constants.Greetings.Random(), out response);
+                    break;
+            }
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// DEPRECATED
+        /// </summary>
+        private async Task LegacyStartConvoWith([Remainder]string userName = null)
         {
             DiscordSocketClient client = Context.Client;
             SocketGuild guild = client.Guilds.Random();
@@ -400,19 +624,9 @@ namespace YADB.Modules
             //  select a random user name from main channel
             if (userName == null)
             {
-                //  Limit the number of attempts to get a random user.
-                //  Re-select when the selected user is the bot itself.
+                SocketGuildUser recipientUser = GetRandomActiveUser(guild);
 
-                SocketGuildUser recipientUser = null;
-                ulong botId = client.CurrentUser.Id;
-                int maxAttempts = 10;
-                for (int i = 0; i < maxAttempts; i++)
-                {
-                    recipientUser = GetRandomActiveUser(guild);
-                    if (recipientUser.Id != botId) break;
-                };
-
-                if (recipientUser.Id == botId)
+                if (recipientUser == null)
                 {
                     await PMFeedbackAsync("Nobody found to converse with.", MessageSeverity.CriticalOrFailure);
                 }
@@ -444,7 +658,7 @@ namespace YADB.Modules
                     await Chat.GetReply(Constants.Greetings.Random(), out response);
                     break;
             }
-            
+
             //  Send conversation starter
             await channel.SendMessageAsync(userName + ", " + response);
 
@@ -454,7 +668,7 @@ namespace YADB.Modules
             feedback = feedback.Replace("{message}", response);
             details = "To user: {user}";
             details = details.Replace("{user}", userName);
-            await PMReportIssueAsync(feedback, details, MessageSeverity.Success);       
+            await PMReportIssueAsync(feedback, details, MessageSeverity.Success);
         }
 
         #endregion
@@ -536,7 +750,7 @@ namespace YADB.Modules
                     }
                     else
                     {
-                        string channelDisplay = string.Format("{0} --> {1} : {2}", 
+                        string channelDisplay = string.Format("{0} --> {1} : {2}",
                             guildChannel.Name,
                             "(" + guild.Name + ")",
                             ChannelTypeToString(guildChannel));

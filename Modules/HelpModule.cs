@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using System.Linq;
 using System.Threading.Tasks;
 using YADB.Common;
+using YADB.Preconditions;
 
 namespace YADB.Modules
 {
@@ -16,6 +17,16 @@ namespace YADB.Modules
         public HelpModule(CommandService service)
         {
             _service = service;
+        }
+
+        [Command("#InviteLink"), Alias("#il")]
+        [Remarks("PM the bot's Invite Link to the owner")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task HelpInviteBot()
+        {
+            //  Send help via direct-message to the user            
+            var dmchannel = await Context.User.GetOrCreateDMChannelAsync();
+            await dmchannel.SendMessageAsync("Invite Link:\n"+Configuration.Get.InviteLink);
         }
 
         /// <summary>
@@ -47,7 +58,7 @@ namespace YADB.Modules
 
             foreach (var module in _service.Modules)
             {
-                string description = null;
+                string description = "";
                 foreach (var cmd in module.Commands)
                 {
                     var result = await cmd.CheckPreconditionsAsync(Context);
@@ -72,12 +83,21 @@ namespace YADB.Modules
             {
                 SocketGuildUser guildUser = Context.Guild.CurrentUser;
                 postHelp += "Just make sure to always address me, so I know who you are talking to.\n\n"
-                + "You can address me with my username '"+guildUser.Username+"', "
-                + "my current nickname '"+guildUser.Nickname+"', "
-                + "or '" + Configuration.Get.Prefix[0] + "' "
-                + "plus the first 2 characters of my nickname, e.g., '"
-                + Configuration.Get.Prefix[0] + Context.Guild.CurrentUser.Nickname.Substring(0, 2)
-                + "'";
+                + "You can address me with my username '" + guildUser.Username;
+
+                if (string.IsNullOrWhiteSpace(guildUser.Nickname))
+                {
+                    postHelp += ". ";
+                }else 
+                {
+                    postHelp += "', ";
+                    postHelp += "my current nickname '" + guildUser.Nickname + "', ";
+                    postHelp += "or '" + Configuration.Get.Prefix[0] + "' ";
+                    postHelp += "plus the first 2 characters of my nickname, e.g., '";
+                    postHelp += Configuration.Get.Prefix[0];
+                    postHelp += Context.Guild.CurrentUser.Nickname.Substring(0, 2);
+                    postHelp += "'";
+                }
             }
 
             builder.AddField(x =>
@@ -87,7 +107,7 @@ namespace YADB.Modules
                 x.IsInline = false;
             });
 
-            //  When this is a DM channel, direct the user 
+            //  When this is a public channel, direct the user 
             //  to look at their direct-messages.
             if ((Context.Channel as IDMChannel) == null)
             {

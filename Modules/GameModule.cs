@@ -249,13 +249,30 @@ namespace YADB.Modules
                     //  since the last time this was used, abort.
                     if (howlonghasitbeen < rollFrequency)
                     {
-                        await ReplyAsync("I think this channel has had enough for awhile.");
+                        if (Constants.rnd.Next(6) == 0)
+                        {
+                            //  PM user a rickroll
+                            await ReplyAsync("Again, already? It's a bit soon for the channel, but just for you... Check your PM's");
+                            var dmChannel = await Context.Client.CurrentUser.GetOrCreateDMChannelAsync();
+                            await StartRickRoll(dmChannel.Id);
+                        }
+                        else
+                        {
+                            string[] no = new string[] {
+                                "I think this channel has had enough for awhile.",
+                                "It's only funny the first time.",
+                                "Nobody likes a spammer.",
+                                "Or.. and hear me out.. we could _not_ spam the channel.",
+                                "No. Too many **#rickroll##s! No more for you!"
+                            };
+                            await ReplyAsync(no.Random());
+                        }
                         return;
                     }
                 }
 
                 //  Start the RickRoll
-                await StartRickRoll();
+                await StartRickRoll(Context.Channel.Id);
                 return;
             }
 
@@ -267,10 +284,10 @@ namespace YADB.Modules
             else await ReplyAsync("Who's Rick-rolling around here?");
         }
 
-        private Task StartRickRoll()
+        private Task StartRickRoll(ulong channelId)
         {
             rolling = true;
-            rollingChannelId = Context.Channel.Id;
+            rollingChannelId = channelId;
 
             //  Start loop thread
             rollThread = new Thread(async () => await RollLoop());

@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,6 +27,7 @@ namespace YADB.Modules
 
         [Command("#botnick"), Alias("#bn")]
         [Remarks("Tell the bot to select a new nickname.")]
+        [MinPermissions(AccessLevel.BotOwner)]
         public async Task BotNick()
         {            
             var allUsers = Context.Guild.Users;

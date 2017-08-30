@@ -15,7 +15,7 @@ namespace YADB.Modules
     {
         [Command("you")]
         [Summary("Remove all recent messages")]
-        //[MinPermissions(AccessLevel.ServerMod)]
+        [MinPermissions(AccessLevel.ServerMod)]
         public async Task CleanAsync(int history = 100)
         {
             var self = Context.Guild.CurrentUser;
@@ -95,6 +95,7 @@ namespace YADB.Modules
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         [RequireBotPermission(ChannelPermission.ManageMessages)]
         [Summary("Remove all recent messages with attachments")]
+        [MinPermissions(AccessLevel.ServerMod)]
         public async Task AttachmentsAsync(int history = 25)
         {
             var messages = (await GetMessageAsync(history)).Where(x => x.Attachments.Count() != 0);

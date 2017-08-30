@@ -21,6 +21,10 @@ namespace YADB
         public string[] SubPrefix { get; set; } = new string[] { "#" };
         /// <summary> Your bot's login token. </summary>
         public string Token { get; set; } = "";
+        /// <summary>
+        /// Link to provide admin so the bot can be invited to operate on a server.
+        /// </summary>
+        public string InviteLink { get; set; }
 
         [JsonIgnore]
         public static Configuration Get;

@@ -305,7 +305,8 @@ namespace YADB.Services
             bool single = quest.GetDragonChoices.Length == 1;
             string questStatus = "Your warrior must slay " + required
                 + " "+ (single ? "dragon" : "dragons")
-                + " to complete this "+quest.Description.ToLower()+" quest.";
+                + " to complete this "+quest.Description.ToLower()+" quest."
+                +" To hunt a dragon, type the number next to the dragon.";
 
             //  Display quest status
             string remaining = "There " +(single?"is":"are")
@@ -547,7 +548,11 @@ namespace YADB.Services
                 DragonDiceData.Get.playerWarriors.Remove(playerId);
             }
             DragonDiceData.Get.playerWarriors.Add(playerId, warrior);
-            await FileOperations.SaveAsJson(DragonDiceData.Get);
+
+            if (warrior.Experience > 0)
+            {
+                await FileOperations.SaveAsJson(DragonDiceData.Get);
+            }
             await Send(context, "Your quest has ended.");
         }
 

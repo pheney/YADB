@@ -44,13 +44,13 @@ namespace YADB
             //  Register the command processor
             _client.MessageReceived += HandleCommandAsync;
             _client.MessageReceived += EchoTrafficAsync;
-            
+
             //  Register the user-joined event
             //_client.UserJoined += AsyncUserJoined;
 
             //  Register the handler that announces the bot is online
             //_client.Ready += IntroductionAsync;
-
+            
             #endregion
         }
 
@@ -73,6 +73,13 @@ namespace YADB
 
             // Create a new command context.
             var context = new SocketCommandContext(_client, msg);
+
+            //  Store the bot ID
+            Constants.BotId = _client.CurrentUser.Id;
+
+            //  Abort processing any message that has an attachment
+            if (context.Message.Attachments.Count != 0) return;
+            if (context.Message.Embeds.Count != 0) return;
 
             #region Special -- DragonDice Game
 
