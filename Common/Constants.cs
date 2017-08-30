@@ -7,6 +7,14 @@ namespace YADB.Common
 {
     public static class Constants
     {
+        /// <summary>
+        /// 2017-8-30
+        /// Temporary re-route of permisison checking. This is required to
+        /// be permitted to test the bot on the Coding With Storm server.
+        /// Set to FALSE for production.
+        /// </summary>
+        public static bool IgnorePermissions = true;
+
         public static Random rnd = new Random();
         public static Color SlateRed = new Color(218, 100, 100);
         public static Color SlateGreen = new Color(100, 218, 100);

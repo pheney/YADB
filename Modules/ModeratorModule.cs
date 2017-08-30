@@ -17,7 +17,8 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Kick([Remainder]SocketGuildUser user)
         {
-            await ReplyAsync("cya " + user.Mention + " :wave:");
+            SocketGuildUser self = Context.Guild.CurrentUser;
+            await ReplyAsync("_"+self.Nickname + " removed "+ user.Mention + " from the room._ :wave:");
             await user.KickAsync();
         }
 

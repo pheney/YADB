@@ -46,9 +46,9 @@ namespace YADB
             _client.MessageReceived += EchoTrafficAsync;
             
             //  Register the user-joined event
-            _client.UserJoined += AsyncUserJoined;
+            //_client.UserJoined += AsyncUserJoined;
 
-            //  Regsiter the handler that announces the bot is online
+            //  Register the handler that announces the bot is online
             //_client.Ready += IntroductionAsync;
 
             #endregion

@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using YADB.Common;
 
 namespace YADB.Preconditions
 {
@@ -19,15 +20,31 @@ namespace YADB.Preconditions
         {
             Level = level;
         }
-
+        
+        /// <summary>
+        /// 2017-8-30
+        /// Indicates if the command can be executed by the user.
+        /// </summary>
         public override Task<PreconditionResult> CheckPermissions(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            var access = GetPermission(context);            // Get the acccesslevel for this context
-
-            if (access >= Level)                            // If the user's access level is greater than the required level, return success.
+            if (Constants.IgnorePermissions)
+            {
                 return Task.FromResult(PreconditionResult.FromSuccess());
+            }
+
+            //  The required Access Level comes from the context object
+            var access = GetPermission(context);
+
+            //  When user access level is the same, or greater than, the required
+            //  permission, grant access.
+            if (access >= Level)
+            {
+                return Task.FromResult(PreconditionResult.FromSuccess());
+            }
             else
+            {
                 return Task.FromResult(PreconditionResult.FromError("Insufficient permissions."));
+            }
         }
 
         public AccessLevel GetPermission(ICommandContext c)

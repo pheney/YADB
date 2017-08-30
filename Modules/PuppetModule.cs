@@ -223,7 +223,7 @@ namespace YADB.Modules
                         SocketGuild guild = Context.Client.Guilds.First();
                         SocketGuildUser botUser = guild.GetUser(botId);
                         string nickname = botUser.Nickname;
-
+                        
                         //  get the main channel of the guild
                         SocketGuildChannel guildChannel = guild.GetChannel(guild.Id);
                         ITextChannel textChannel = guildChannel as ITextChannel;
