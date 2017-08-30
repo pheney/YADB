@@ -78,7 +78,7 @@ namespace YADB.Services
             }
         }
 
-        private static int delayMillis = 300;
+        private static int delayMillis = 100;
 
         #region External Access
 
@@ -708,7 +708,7 @@ namespace YADB.Services
             public bool ShowResults;
             private List<Dragon> Dragons;
 
-            public enum QuestLevel { Normal, Tough, Adventurous, Heroic, Epic }
+            public enum QuestLevel { Tough, Difficult, Adventurous, Heroic, Epic }
             private QuestLevel questLevel;
 
             public enum QuestState { Complete, Hunting, Ready }
