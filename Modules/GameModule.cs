@@ -531,6 +531,7 @@ namespace YADB.Modules
                     {
                         display = "Not bad! We got more than " + string.Format("{0:0%}", successRatio) + " of the way through the song!";
                     }
+                    display += " The next line was: _"+ haddawayLyrics[haddawayGames[channelId]] +"_";
                     context.Channel.SendMessageAsync(display);
                 }
                 haddawayGames.Remove(channelId);
