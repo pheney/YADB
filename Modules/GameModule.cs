@@ -37,7 +37,7 @@ namespace YADB.Modules
                 //"{cap}{insult}, says \"what\"?",
                 "Do we really need another {insult} around here?",
                 "Honestly, {insult}?",
-                "Look everybody! {def} {insult} speaks!",
+                "Look everybody! {cap}{def} {insult} speaks!",
                 "I think I just heard {indef} {insult} running it's yipyap.",
                 "Oh look, {def} {insult} is back at it again.",
                 "Who let {def} {insult} in here?",
