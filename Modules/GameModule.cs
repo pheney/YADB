@@ -14,9 +14,9 @@ namespace YADB.Modules
     [Name("Games")]
     public class GameModule : ModuleBase<SocketCommandContext>
     {
-        protected GameModule():base()
+        protected GameModule() : base()
         {
-            if (EightBallData.Get==null) EightBallData.Init();
+            if (EightBallData.Get == null) EightBallData.Init();
         }
 
         #region Insults
@@ -33,26 +33,28 @@ namespace YADB.Modules
             {
                 "You are {indef} {insult}",
                 //"What {indef} {insult}",
-                "Ok {insult}, that's enough out of you.",
+                "Ok you {insult}, that's enough out of you.",
                 //"{cap}{insult}, says \"what\"?",
                 "Do we really need another {insult} around here?",
                 "Honestly, {insult}?",
                 "Look everybody! {def} {insult} speaks!",
                 "I think I just heard {indef} {insult} running it's yipyap.",
                 "Oh look, {def} {insult} is back at it again.",
-                "Who let {def} {insult} in here?"
+                "Who let {def} {insult} in here?",
+                "According to {def} {insult}, it's yammer time.",
+                "Who pulled your string, you {insult}?"
             };
 
             string result = leads.Random()
                 .Replace("{def}", def)
                 .Replace("{indef}", indef)
                 .Replace("{insult}", insult);
-            if (result.Contains("{cap}")) result = Insult.Capitalize(result.Remove(0,5));
+            if (result.Contains("{cap}")) result = Insult.Capitalize(result.Remove(0, 5));
             await ReplyAsync(result);
         }
 
         #endregion
-            #region Magic Eight Ball
+        #region Magic Eight Ball
 
         [Serializable]
         private class EightBallData
@@ -61,7 +63,7 @@ namespace YADB.Modules
             public static EightBallData Get;
 
             public int TotalRolls = 0;
-            
+
             public static void Init()
             {
                 string FileName = new EightBallData().GetFilename();
@@ -72,7 +74,7 @@ namespace YADB.Modules
                 {
                     //  Create a new configuration object
                     var data = new EightBallData();
-                    
+
                     //  Save the configuration object
                     FileOperations.SaveAsJson(data);
                 }
@@ -80,11 +82,11 @@ namespace YADB.Modules
                 EightBallData.Get = FileOperations.Load<EightBallData>();
 
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine(FileName+" loaded");
+                Console.WriteLine(FileName + " loaded");
                 Console.ResetColor();
             }
         }
-        
+
         public static Task EightBallStatus(SocketCommandContext context)
         {
             if (EightBallData.Get == null) EightBallData.Init();
@@ -101,7 +103,7 @@ namespace YADB.Modules
 
             return Task.CompletedTask;
         }
-        
+
         private static string[] EightBallResults = new string[]
         {
             "It is certain",
@@ -126,7 +128,7 @@ namespace YADB.Modules
             "Very doubtful"
         };
 
-        [Command("#8ball"), Alias ("#8")]
+        [Command("#8ball"), Alias("#8")]
         [Remarks("Ask a question, get an answer")]
         [MinPermissions(AccessLevel.User)]
         public async Task MagicEightBall([Remainder]string question = null)
@@ -167,7 +169,7 @@ namespace YADB.Modules
             {
                 display += "not rolling";
             }
-            if (lastRollByChannel != null && lastRollByChannel.Count>0)
+            if (lastRollByChannel != null && lastRollByChannel.Count > 0)
             {
                 display += "\n" + RollingHistoryToString(context);
             }
@@ -190,7 +192,7 @@ namespace YADB.Modules
             foreach (var entry in lastRollByChannel)
             {
                 result += "Channel " + context.Client.GetChannel(entry.Key).ToString()
-                + ", last roll at " + entry.Value.ToLocalTime()+"\n";
+                + ", last roll at " + entry.Value.ToLocalTime() + "\n";
             }
             return result.Substring(0, result.Length - 1);
         }
@@ -327,7 +329,7 @@ namespace YADB.Modules
             rollThread.Start();
             return Task.CompletedTask;
         }
-        
+
         private async Task RollLoop()
         {
             int delayMillis = 2000;
@@ -346,7 +348,8 @@ namespace YADB.Modules
             if (lastRollByChannel.ContainsKey(rollingChannelId))
             {
                 lastRollByChannel[rollingChannelId] = DateTime.Now;
-            }else
+            }
+            else
             {
                 lastRollByChannel.Add(rollingChannelId, DateTime.Now);
             }
@@ -359,20 +362,20 @@ namespace YADB.Modules
         private static string HaddawayGamesToString()
         {
             string result = "";
-            foreach(var entry in haddawayGames)
+            foreach (var entry in haddawayGames)
             {
                 result += "Channel " + entry.Key
                     + ", at index " + entry.Value
                     + "/" + haddawayLyrics.Length
-                    + " (" + string.Format("{0:0%}", entry.Value/(float)haddawayLyrics.Length) + " complete)\n";
+                    + " (" + string.Format("{0:0%}", entry.Value / (float)haddawayLyrics.Length) + " complete)\n";
             }
-            return result.Substring(0,result.Length-1);
+            return result.Substring(0, result.Length - 1);
         }
 
         public static Task HaddawayStatus(SocketCommandContext context)
         {
             string display = "Haddaway status: ";
-            if (haddawayGames == null||haddawayGames.Count==0)
+            if (haddawayGames == null || haddawayGames.Count == 0)
             {
                 display += "No games running";
             }
@@ -472,7 +475,7 @@ namespace YADB.Modules
             "No more",
             "What is love?"
         };
-        
+
         /// <summary>
         /// Key: channelId
         /// Value: current lyric index
@@ -559,7 +562,8 @@ namespace YADB.Modules
                 context.Channel.SendMessageAsync(displayLyric);
 
                 //  Check for end game
-                if (haddawayGames[channelId]>=haddawayLyrics.Length) {
+                if (haddawayGames[channelId] >= haddawayLyrics.Length)
+                {
                     //  You win
                     context.Channel.SendMessageAsync("We did the whole song!! Awesome!");
                     haddawayGames.Remove(channelId);
@@ -581,7 +585,7 @@ namespace YADB.Modules
                     {
                         display = "Not bad! We got more than " + string.Format("{0:0%}", successRatio) + " of the way through the song!";
                     }
-                    display += " The next line was: _"+ haddawayLyrics[haddawayGames[channelId]] +"_";
+                    display += " The next line was: _" + haddawayLyrics[haddawayGames[channelId]] + "_";
                     context.Channel.SendMessageAsync(display);
                 }
                 haddawayGames.Remove(channelId);
@@ -599,7 +603,7 @@ namespace YADB.Modules
         public static float GetMatchAccuracy(string left, string right)
         {
             left = left.ToLower();
-            right= right.ToLower();
+            right = right.ToLower();
 
             int n = left.Length;
             int m = right.Length;
@@ -614,9 +618,9 @@ namespace YADB.Modules
             for (int j = 0; j <= m; d[0, j] = j++) ;
 
             //  Magic
-            for(int i = 1; i <= n; i++)
+            for (int i = 1; i <= n; i++)
             {
-                for(int j = 1; j <= m; j++)
+                for (int j = 1; j <= m; j++)
                 {
                     int cost = (left[i - 1] == right[j - 1]) ? 0 : 1;
                     d[i, j] = Math.Min(
@@ -634,7 +638,7 @@ namespace YADB.Modules
 
         #endregion
         #region Dragon Dice
-        
+
         [Command("#Quest"), Alias("#q")]
         [Remarks("Fight dragons")]
         [MinPermissions(AccessLevel.User)]
