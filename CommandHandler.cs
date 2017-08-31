@@ -529,8 +529,9 @@ namespace YADB
         /// <param name="user">The user that just joined</param>
         public static async Task AsyncUserJoined(SocketGuildUser user)
         {
-            await Program.AsyncConsoleMessage("User (" + user.Username + ") joined channel", ConsoleColor.Cyan);
             var userChannel = GetUserChannel(user);
+            await Program.AsyncConsoleMessage("User (" + user.Username + ") joined channel", ConsoleColor.Cyan);
+            
             string greeting;
             await Services.Chat.GetReply(Constants.Greetings.Random(), out greeting);
             await userChannel.SendMessageAsync(user.Username + ", " + greeting);
