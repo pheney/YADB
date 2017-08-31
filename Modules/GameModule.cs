@@ -8,17 +8,24 @@ using System.Threading;
 using Discord;
 using Newtonsoft.Json;
 using YADB.Services;
+using Discord.WebSocket;
 
 namespace YADB.Modules
 {
     [Name("Games")]
     public class GameModule : ModuleBase<SocketCommandContext>
     {
-        protected GameModule() : base()
-        {
-            if (EightBallData.Get == null) EightBallData.Init();
-        }
+        #region Test Info
 
+        [Command("#test"), Alias("#t")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task ExecuteTest(params string[] input)
+        {
+            await Insult.Save(); 
+            await ReplyAsync("saved");
+        }
+        
+        #endregion
         #region Insults
 
         [Command("#insult"), Alias("#r")]
@@ -26,31 +33,7 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.User)]
         public async Task SpeakInsult()
         {
-            string insult = Insult.GetInsult(2);
-            string def = Insult.GetDefiniteArticle(insult);
-            string indef = Insult.GetIndefiniteArticle(insult);
-            string[] leads = new string[]
-            {
-                "You are {indef} {insult}",
-                //"What {indef} {insult}",
-                "Ok you {insult}, that's enough out of you.",
-                //"{cap}{insult}, says \"what\"?",
-                "Do we really need another {insult} around here?",
-                "Honestly, {insult}?",
-                "Look everybody! {cap}{def} {insult} speaks!",
-                "I think I just heard {indef} {insult} running it's yipyap.",
-                "Oh look, {def} {insult} is back at it again.",
-                "Who let {def} {insult} in here?",
-                "According to {def} {insult}, it's yammer time.",
-                "Who pulled your string, you {insult}?"
-            };
-
-            string result = leads.Random()
-                .Replace("{def}", def)
-                .Replace("{indef}", indef)
-                .Replace("{insult}", insult);
-            if (result.Contains("{cap}")) result = Insult.Capitalize(result.Remove(0, 5));
-            await ReplyAsync(result);
+            await ReplyAsync(Insult.GetInsult());
         }
 
         #endregion
@@ -133,6 +116,7 @@ namespace YADB.Modules
         [MinPermissions(AccessLevel.User)]
         public async Task MagicEightBall([Remainder]string question = null)
         {
+            if (EightBallData.Get == null) EightBallData.Init();
             if (string.IsNullOrWhiteSpace(question))
             {
                 await ReplyAsync("You must ask a question for the mystic Magic Eight Ball to help you!");

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using YADB.Common;
 
 namespace YADB.Services
@@ -17,26 +18,23 @@ namespace YADB.Services
             string first = SelectFirstWord(vulgarity);
             string second = SelectSecondWord(vulgarity, first);
             string third = SelectThirdWord(vulgarity, second);
-            return first + " " + second + " " + third;
+
+            string insult = first + " " + second + " " + third;
+            string def = Insult.GetDefiniteArticle(insult);
+            string indef = Insult.GetIndefiniteArticle(insult);
+            string phrase = Insult.GetPhrase();
+
+            string result = phrase
+                .Replace("{def}", def)
+                .Replace("{indef}", indef)
+                .Replace("{insult}", insult);
+            return result;
         }
 
-        private static string vowels = "aeiou";
-
-        public static string GetIndefiniteArticle(string word)
+        public static async Task Save()
         {
-            char firstLetter = word[0];
-            if (vowels.Contains(firstLetter)) return "an";
-            else return "a";
-        }
-
-        public static string GetDefiniteArticle(string word)
-        {
-            return "the";
-        }
-
-        public static string Capitalize(this string source)
-        {
-            return source.Substring(0, 1).ToUpper() + source.Substring(1).ToLower();
+            if (InsultData.Get == null) return;
+            await FileOperations.SaveAsJson(InsultData.Get);
         }
 
         #endregion
@@ -49,6 +47,8 @@ namespace YADB.Services
             public static InsultData Get;
 
             #region Data
+
+            public string[] Phrases = new string[] { "" };
 
             public string[] VulgarityOptions = new string[] {
             "Child", "American", "British", "Australian" };
@@ -221,5 +221,30 @@ namespace YADB.Services
             }
             return result;
         }
+
+        private static string GetPhrase()
+        {
+            return InsultData.Get.Phrases.Random();
+        }
+
+        private static string vowels = "aeiou";
+
+        private static string GetIndefiniteArticle(string word)
+        {
+            char firstLetter = word[0];
+            if (vowels.Contains(firstLetter)) return "an";
+            else return "a";
+        }
+
+        private static string GetDefiniteArticle(string word)
+        {
+            return "the";
+        }
+
+        private static string Capitalize(this string source)
+        {
+            return source.Substring(0, 1).ToUpper() + source.Substring(1).ToLower();
+        }
+
     }
 }
