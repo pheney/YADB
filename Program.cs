@@ -3,7 +3,6 @@ using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
-using YADB.Common;
 
 namespace YADB
 {

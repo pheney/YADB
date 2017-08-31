@@ -30,13 +30,123 @@ namespace YADB.Services
                 .Replace("{insult}", insult);
             return result;
         }
-
-        public static async Task Save()
-        {
-            if (InsultData.Get == null) return;
-            await FileOperations.SaveAsJson(InsultData.Get);
+        
+        public enum WordType { Phrase, Adjective, SophisticatedAdjective,
+            AdjectivalNoun, VulgarAdjectivalNoun, Noun, VulgarNoun, ActiveVerb
         }
 
+        public static string[] ShowTerms(WordType wordType)
+        {
+            if (InsultData.Get == null) InsultData.Init();
+            string[] result = null;
+            switch (wordType)
+            {
+                case WordType.Phrase:
+                    result = InsultData.Get.Phrases;
+                    break;
+                case WordType.Adjective:
+                    result = InsultData.Get.SimpleAdjectives;
+                    break;
+                case WordType.SophisticatedAdjective:
+                    result = InsultData.Get.SophisticatedAdjectives;
+                    break;
+                case WordType.AdjectivalNoun:
+                    result = InsultData.Get.SimpleAdjectivalNouns;
+                    break;
+                case WordType.VulgarAdjectivalNoun:
+                    result = InsultData.Get.VulgarAdjectivalNouns;
+                    break;
+                case WordType.Noun:
+                    result = InsultData.Get.SimpleNouns;
+                    break;
+                case WordType.VulgarNoun:
+                    result = InsultData.Get.VulgarNouns;
+                    break;
+                case WordType.ActiveVerb:
+                    result = InsultData.Get.ActiveFormVerbs;
+                    break;
+            }
+            return result;
+        }
+
+        public static async Task AddPhrase(string phrase)
+        {
+            if (InsultData.Get == null) InsultData.Init();
+            if (phrase.Length == 0) return;
+            InsultData.Get.Phrases = Combine(InsultData.Get.Phrases, new string[] { phrase });
+            await Save();
+        }
+
+        public static async Task RemovePhrase(string phrase)
+        {
+            if (InsultData.Get == null) InsultData.Init();
+            if (phrase.Length == 0) return;
+            InsultData.Get.Phrases = Remove(InsultData.Get.Phrases, new string[] { phrase });
+            await Save();
+        }
+
+        public static async Task AddTerms(string[] words, WordType wordType)
+        {
+            if (InsultData.Get == null) InsultData.Init();
+            if (words.Length == 0) return;
+            switch (wordType)
+            {
+                case WordType.Adjective:
+                    InsultData.Get.SimpleAdjectives = Combine(InsultData.Get.SimpleAdjectives, words);
+                    break;
+                case WordType.SophisticatedAdjective:
+                    InsultData.Get.SophisticatedAdjectives= Combine(InsultData.Get.SophisticatedAdjectives, words);
+                    break;
+                case WordType.AdjectivalNoun:
+                    InsultData.Get.SimpleAdjectivalNouns = Combine(InsultData.Get.SimpleAdjectivalNouns, words);
+                    break;
+                case WordType.VulgarAdjectivalNoun:
+                    InsultData.Get.VulgarAdjectivalNouns = Combine(InsultData.Get.VulgarAdjectivalNouns, words);
+                    break;
+                case WordType.Noun:
+                    InsultData.Get.SimpleNouns = Combine(InsultData.Get.SimpleNouns, words);
+                    break;
+                case WordType.VulgarNoun:
+                    InsultData.Get.VulgarNouns = Combine(InsultData.Get.VulgarNouns, words);
+                    break;
+                case WordType.ActiveVerb:
+                    InsultData.Get.ActiveFormVerbs= Combine(InsultData.Get.ActiveFormVerbs, words);
+                    break;
+            }
+            await Save();
+        }
+
+        public static async Task RemoveTerms(string[] words, WordType wordType)
+        {
+            if (InsultData.Get == null) InsultData.Init();
+            if (words.Length == 0) return;
+            switch (wordType)
+            {
+                case WordType.Adjective:
+                    InsultData.Get.SimpleAdjectives = Remove(InsultData.Get.SimpleAdjectives, words);
+                    break;
+                case WordType.SophisticatedAdjective:
+                    InsultData.Get.SophisticatedAdjectives = Remove(InsultData.Get.SophisticatedAdjectives, words);
+                    break;
+                case WordType.AdjectivalNoun:
+                    InsultData.Get.SimpleAdjectivalNouns = Remove(InsultData.Get.SimpleAdjectivalNouns, words);
+                    break;
+                case WordType.VulgarAdjectivalNoun:
+                    InsultData.Get.VulgarAdjectivalNouns = Remove(InsultData.Get.VulgarAdjectivalNouns, words);
+                    break;
+                case WordType.Noun:
+                    InsultData.Get.SimpleNouns = Remove(InsultData.Get.SimpleNouns, words);
+                    break;
+                case WordType.VulgarNoun:
+                    InsultData.Get.VulgarNouns = Remove(InsultData.Get.VulgarNouns, words);
+                    break;
+                case WordType.ActiveVerb:
+                    InsultData.Get.ActiveFormVerbs = Remove(InsultData.Get.ActiveFormVerbs, words);
+                    break;
+            }
+            await Save();
+        }
+        
         #endregion
         #region Data
 
@@ -53,23 +163,23 @@ namespace YADB.Services
             public string[] VulgarityOptions = new string[] {
             "Child", "American", "British", "Australian" };
 
-            public string[] ColumnAbasic = new string[] { "fat" };
+            public string[] SimpleAdjectives = new string[] { "fat" };
 
-            public string[] ColumnA = new string[] { "pathetic" };
+            public string[] SophisticatedAdjectives = new string[] { "pathetic" };
 
-            public string[] ColumnB = new string[] { "butt" };
+            public string[] SimpleAdjectivalNouns = new string[] { "butt" };
 
-            public string[] ColumnBvulgar = new string[] { "douche" };
+            public string[] VulgarAdjectivalNouns = new string[] { "douche" };
 
-            public string[] ColumnC = new string[] { "canoe" };
+            public string[] SimpleNouns = new string[] { "canoe" };
 
-            public string[] ColumnCvulgar = new string[] { "pilot" };
+            public string[] VulgarNouns = new string[] { "pilot" };
 
             public string[] Australian = new string[] { "cunt" };
 
             public string[] Teen = new string[] { "shit" };
 
-            public string[] Teening = new string[] { "fucking" };
+            public string[] ActiveFormVerbs = new string[] { "fucking" };
 
             #endregion
 
@@ -97,7 +207,6 @@ namespace YADB.Services
         }
 
         #endregion
-
 
         //  Patrick Heney (C) 2017
         //  This is mean purely for fun. Even the bit about Australian profanity.
@@ -141,7 +250,7 @@ namespace YADB.Services
             return result;
         }
 
-        private static List<string> Combine(params string[][] arrays)
+        private static List<string> CombineToList(params string[][] arrays)
         {
             List<string> words = new List<string>();
             foreach (string[] a in arrays) words.AddRange(a.ToList());
@@ -156,15 +265,15 @@ namespace YADB.Services
             {
                 case 0:
                     //  Child (basic vocabulary)
-                    result = Select(InsultData.Get.ColumnAbasic, "");
+                    result = Select(InsultData.Get.SimpleAdjectives, "");
                     break;
                 case 1:
                     //  Angsty Teen (basic vocabulary, Teen-ing)
-                    result = Select(Combine(InsultData.Get.ColumnAbasic, InsultData.Get.Teening), "");
+                    result = Select(CombineToList(InsultData.Get.SimpleAdjectives, InsultData.Get.ActiveFormVerbs), "");
                     break;
                 default:
                     //  British, Australian (full vocabulary)
-                    result = Select(Combine(InsultData.Get.ColumnAbasic, InsultData.Get.ColumnA), "");
+                    result = Select(CombineToList(InsultData.Get.SimpleAdjectives, InsultData.Get.SophisticatedAdjectives), "");
                     break;
             }
 
@@ -178,19 +287,19 @@ namespace YADB.Services
             {
                 case 0:
                     //  Child (no profanity)
-                    result = Select(InsultData.Get.ColumnB, firstWord);
+                    result = Select(InsultData.Get.SimpleAdjectivalNouns, firstWord);
                     break;
                 case 1:
                     //  Angsty Teen (yes profanity, Teen language)
-                    result = Select(Combine(InsultData.Get.ColumnB, InsultData.Get.ColumnBvulgar, InsultData.Get.Teen), firstWord);
+                    result = Select(CombineToList(InsultData.Get.SimpleAdjectivalNouns, InsultData.Get.VulgarAdjectivalNouns, InsultData.Get.Teen), firstWord);
                     break;
                 case 2:
                     //  British (yes profanity)
-                    result = Select(Combine(InsultData.Get.ColumnB, InsultData.Get.ColumnBvulgar), firstWord);
+                    result = Select(CombineToList(InsultData.Get.SimpleAdjectivalNouns, InsultData.Get.VulgarAdjectivalNouns), firstWord);
                     break;
                 default:
                     //  Australian (yes profanity, Australian language)
-                    result = Select(Combine(InsultData.Get.ColumnBvulgar, InsultData.Get.Australian), firstWord);
+                    result = Select(CombineToList(InsultData.Get.VulgarAdjectivalNouns, InsultData.Get.Australian), firstWord);
                     break;
             }
             return result;
@@ -203,20 +312,20 @@ namespace YADB.Services
             {
                 case 0:
                     //  Child (no profanity)
-                    result = Select(InsultData.Get.ColumnC, secondWord);
+                    result = Select(InsultData.Get.SimpleNouns, secondWord);
                     break;
                 case 1:
 
                     //  Angsty Teen (use profanity, Teen language)
-                    result = Select(Combine(InsultData.Get.ColumnC, InsultData.Get.ColumnCvulgar, InsultData.Get.Teen), secondWord);
+                    result = Select(CombineToList(InsultData.Get.SimpleNouns, InsultData.Get.VulgarNouns, InsultData.Get.Teen), secondWord);
                     break;
                 case 2:
                     //  British (use profanity)
-                    result = Select(Combine(InsultData.Get.ColumnC, InsultData.Get.ColumnCvulgar), secondWord);
+                    result = Select(CombineToList(InsultData.Get.SimpleNouns, InsultData.Get.VulgarNouns), secondWord);
                     break;
                 default:
                     //  Australian (use profanity, Australian language)
-                    result = Select(Combine(InsultData.Get.ColumnC, InsultData.Get.ColumnCvulgar, InsultData.Get.Australian), secondWord);
+                    result = Select(CombineToList(InsultData.Get.SimpleNouns, InsultData.Get.VulgarNouns, InsultData.Get.Australian), secondWord);
                     break;
             }
             return result;
@@ -246,5 +355,30 @@ namespace YADB.Services
             return source.Substring(0, 1).ToUpper() + source.Substring(1).ToLower();
         }
 
+        private static string[] Combine(string[] source, string[] newWords)
+        {
+            List<string> words = source.ToList();
+            foreach (string word in newWords)
+            {
+                words.AddUnique(word);
+            }
+            return words.ToArray();
+        }
+
+        private static string[] Remove(string[] source, string[] newWords)
+        {
+            List<string> words = source.ToList();
+            foreach (string word in newWords)
+            {
+                if (words.Contains(word)) words.Remove(word);
+            }
+            return words.ToArray();
+        }
+
+        private static async Task Save()
+        {
+            if (InsultData.Get == null) return;
+            await FileOperations.SaveAsJson(InsultData.Get);
+        }
     }
 }

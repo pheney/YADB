@@ -8,32 +8,171 @@ using System.Threading;
 using Discord;
 using Newtonsoft.Json;
 using YADB.Services;
-using Discord.WebSocket;
 
 namespace YADB.Modules
 {
     [Name("Games")]
     public class GameModule : ModuleBase<SocketCommandContext>
     {
-        #region Test Info
-
-        [Command("#test"), Alias("#t")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task ExecuteTest(params string[] input)
-        {
-            await Insult.Save(); 
-            await ReplyAsync("saved");
-        }
-        
-        #endregion
         #region Insults
 
-        [Command("#insult"), Alias("#r")]
+        [Command("#insult"), Alias("#un")]
         [Remarks("Ask for an insult")]
         [MinPermissions(AccessLevel.User)]
         public async Task SpeakInsult()
         {
             await ReplyAsync(Insult.GetInsult());
+        }
+
+        [Command("#insult add"), Alias("#ia")]
+        [Remarks("Add to the insult database")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task AddInsult(int usage, [Remainder]string words)
+        {
+            if (usage == (int)Insult.WordType.Phrase) return;
+
+            if (!IsSafeInput(words))
+            {
+                await ReplyAsync("Invalid character detected. Words must consist of alphabet letters only.");
+                return;
+            }
+            try
+            {
+                Insult.WordType t = (Insult.WordType)usage;
+                await Insult.AddTerms(words.Split(' '), t);
+                await ReplyAsync("Added");
+            }
+            catch
+            {
+                await ReplyAsync("Add failed");
+            }
+        }
+
+        [Command("#insult remove"), Alias("#ir")]
+        [Remarks("Remove an insult from database")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task DeleteInsult(int usage, [Remainder]string words)
+        {
+            if (usage == (int)Insult.WordType.Phrase) return;
+
+            if (!IsSafeInput(words))
+            {
+                await ReplyAsync("Invalid character detected. Words must consist of alphabet letters only.");
+                return;
+            }
+            try
+            {
+                Insult.WordType t = (Insult.WordType)usage;
+                await Insult.RemoveTerms(words.Split(' '), t);
+                await ReplyAsync("Removed");
+            }
+            catch
+            {
+                await ReplyAsync("Remove failed");
+            }
+        }
+
+        [Command("#insult addphrase"), Alias("#iap")]
+        [Remarks("Add a phrase to the insult database")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task AddInsultPhrase([Remainder]string phrase)
+        {
+            if (!IsSafePhrase(phrase))
+            {
+                await ReplyAsync("Invalid character detected. Words must consist of alphabet letters only.");
+                return;
+            }
+            try
+            {
+                await Insult.AddPhrase(phrase);
+                await ReplyAsync("Added");
+            }
+            catch
+            {
+                await ReplyAsync("Add failed");
+            }
+        }
+
+        [Command("#insult removephrase"), Alias("#irp")]
+        [Remarks("Remove a phrase from the database")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task RemoveInsultPhrase([Remainder]string phrase)
+        {
+            if (!IsSafePhrase(phrase))
+            {
+                await ReplyAsync("Invalid character detected. Words must consist of alphabet letters only.");
+                return;
+            }
+            try
+            {
+                await Insult.RemovePhrase(phrase);
+                await ReplyAsync("Removed");
+            }
+            catch
+            {
+                await ReplyAsync("Remove failed");
+            }
+        }
+
+        [Command("#insult show"), Alias("#is")]
+        [Remarks("Show part of the insult library")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task ShowInsultLibrary(int usage)
+        {
+            if (usage == (int)Insult.WordType.Phrase)
+            {
+                await ShowInsultPhrases();
+                return;
+            }
+            try
+            {
+                Insult.WordType t = (Insult.WordType)usage;
+                await ReplyAsync("**"+t.ToString()+"**\n"+Insult.ShowTerms(t).JoinWith(", "));
+            }
+            catch
+            {
+                await ReplyAsync("Show failed");
+            }
+        }
+
+        private async Task ShowInsultPhrases()
+        {
+            await ReplyAsync(Insult.ShowTerms(Insult.WordType.Phrase).JoinWith("\n"));
+        }
+
+        [Command("#insult info"), Alias("#ii")]
+        [Remarks("List the insult component indicies")]
+        [MinPermissions(AccessLevel.BotOwner)]
+        public async Task InsultIndicies()
+        {
+            string result = "";
+            int i = 0;
+            foreach (var e in Enum.GetValues(typeof(Insult.WordType)))
+            {
+                result += "\n**" + i + "** : " + e.ToString();
+                i++;
+            }
+            await ReplyAsync(result);
+        }
+
+        private bool IsSafePhrase(string phrase)
+        {
+            string valid = "{}.,?'";
+            foreach (char c in phrase.ToLower())
+            {
+                if (!valid.Contains(c.ToString()) && !IsSafeInput(c.ToString())) return false;
+            }
+            return true;
+        }
+
+        private bool IsSafeInput(string input)
+        {
+            string valid = "-_ abcdefghijklmnopqrstuvwxyz";
+            foreach (char c in input.ToLower())
+            {
+                if (!valid.Contains(c.ToString())) return false;
+            }
+            return true;
         }
 
         #endregion

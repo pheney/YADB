@@ -674,7 +674,7 @@ namespace YADB.Modules
         #endregion
         #region Puppet / Announcements
 
-        [Command("#Announce"), Alias("#An", "#a", "#say")]
+        [Command("#Announce"), Alias("#An")]
         [Remarks("PM the bot to make an announcement on another channel, using channel name or channel ID")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Announce([Remainder]string message)
