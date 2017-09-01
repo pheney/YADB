@@ -8,6 +8,8 @@ using System.Threading;
 using Discord;
 using Newtonsoft.Json;
 using YADB.Services;
+using Discord.WebSocket;
+using System.Linq;
 
 namespace YADB.Modules
 {
@@ -19,9 +21,16 @@ namespace YADB.Modules
         [Command("#insult"), Alias("#un")]
         [Remarks("Ask for an insult")]
         [MinPermissions(AccessLevel.User)]
-        public async Task SpeakInsult()
+        public async Task SpeakInsult(string user = null)
         {
-            await ReplyAsync(Insult.GetInsult());
+            SocketGuildUser u = Context.Guild.Users.Where(x => x.Username.Equals(user, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+
+            if (u==null) await ReplyAsync(Insult.GetInsult());
+            else
+            {
+                string name = string.IsNullOrWhiteSpace(u.Nickname) ? u.Username : u.Nickname;
+                await ReplyAsync(Insult.GetInsult(name));
+            }
         }
 
         [Command("#insult add"), Alias("#ia")]
@@ -157,7 +166,7 @@ namespace YADB.Modules
 
         private bool IsSafePhrase(string phrase)
         {
-            string valid = "{}.,?'";
+            string valid = "{}.,?'*_";
             foreach (char c in phrase.ToLower())
             {
                 if (!valid.Contains(c.ToString()) && !IsSafeInput(c.ToString())) return false;
@@ -167,7 +176,7 @@ namespace YADB.Modules
 
         private bool IsSafeInput(string input)
         {
-            string valid = "-_ abcdefghijklmnopqrstuvwxyz";
+            string valid = "- abcdefghijklmnopqrstuvwxyz";
             foreach (char c in input.ToLower())
             {
                 if (!valid.Contains(c.ToString())) return false;

@@ -31,6 +31,11 @@ namespace YADB.Services
             return result;
         }
         
+        public static string GetInsult(string username)
+        {
+            return username + ", " + GetInsult();
+        }
+
         public enum WordType { Phrase, Adjective, SophisticatedAdjective,
             AdjectivalNoun, VulgarAdjectivalNoun, Noun, VulgarNoun, ActiveVerb
         }
