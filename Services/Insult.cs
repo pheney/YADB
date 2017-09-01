@@ -7,6 +7,12 @@ using YADB.Common;
 
 namespace YADB.Services
 {
+    /// <summary>
+    /// 2017-9-1
+    /// 
+    /// For nice things to say, use this:
+    /// https://quotes.rest/#!/qod/get_qod
+    /// </summary>
     public static class Insult
     {
         #region Public API
