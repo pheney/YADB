@@ -105,16 +105,29 @@ namespace YADB.Modules
             await DelayDeleteMessageAsync(reply);
         }
 
+        #region helpers
+
+        /// <summary>
+        /// Gets a number of messages from the current channel
+        /// </summary>
         private Task<IEnumerable<IMessage>> GetMessageAsync(int count)
             => Context.Channel.GetMessagesAsync(count).Flatten();
 
+        /// <summary>
+        /// Deletes all the messages it is handed from the current channel
+        /// </summary>
         private Task DeleteMessagesAsync(IEnumerable<IMessage> messages)
             => Context.Channel.DeleteMessagesAsync(messages);
 
+        /// <summary>
+        /// Deletes the specific message from the current channel
+        /// </summary>
         private async Task DelayDeleteMessageAsync(IMessage message, int ms = 5000)
         {
             await Task.Delay(ms);
             await message.DeleteAsync();
         }
+
+        #endregion
     }
 }

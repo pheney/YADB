@@ -405,8 +405,8 @@ namespace YADB.Modules
                         result = u;
                         break;
                     }
-                    if (result != null) break;
                 }
+                if (result != null) break;
             }
             return result;
         }
