@@ -37,7 +37,7 @@ namespace YADB.Modules
         [Command("all")]
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         [RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Remove all recent messages")]
+        [Summary("Remove recent messages")]
         [MinPermissions(AccessLevel.ServerAdmin)]
         public async Task AllAsync(int history = 25)
         {
@@ -51,7 +51,7 @@ namespace YADB.Modules
         [Command("user")]
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         [RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Remove all recent messages from the specified user")]
+        [Summary("Remove recent messages from the specified user")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task UserAsync(string username, int history = 25)
         {
@@ -66,7 +66,7 @@ namespace YADB.Modules
         [Command("bot")]
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         [RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Remove all recent messages made by bots")]
+        [Summary("Remove recent messages made by bots")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task BotsAsync(int history = 25)
         {
@@ -80,7 +80,7 @@ namespace YADB.Modules
         [Command("phrase")]
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         [RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Remove all recent messages that contain a certain phrase")]
+        [Summary("Remove recent messages that contain a certain phrase")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task ContainsAsync(string text, int history = 25)
         {
@@ -94,7 +94,7 @@ namespace YADB.Modules
         [Command("attach")]
         [RequireUserPermission(ChannelPermission.ManageMessages)]
         [RequireBotPermission(ChannelPermission.ManageMessages)]
-        [Summary("Remove all recent messages with attachments")]
+        [Summary("Remove recent messages with attachments")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task AttachmentsAsync(int history = 25)
         {
