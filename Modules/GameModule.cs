@@ -782,8 +782,12 @@ namespace YADB.Modules
                 await DragonDice.StartGame(Context);
             } else if (!Context.User.IsBot)
             {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    input = " ";
+                }
                 //  parse input for game
-                await DragonDice.HandleInput(Context, input);
+                await DragonDice.HandleInput(Context, input);                
             }            
         }
         
