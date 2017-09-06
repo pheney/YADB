@@ -36,6 +36,7 @@ namespace YADB
             await _cmds.AddModuleAsync<CleanModule>();
             await _cmds.AddModuleAsync<DictionaryModule>();
             await _cmds.AddModuleAsync<GameModule>();
+            await _cmds.AddModuleAsync<NoteModule>();
             //await _cmds.AddModuleAsync<MathModule>();
 
             #endregion
