@@ -774,12 +774,19 @@ namespace YADB.Modules
         [Command("#Quest"), Alias("#q")]
         [Remarks("Fight dragons")]
         [MinPermissions(AccessLevel.User)]
-        public async Task Quest()
+        public async Task Quest([Remainder]string input = null)
         {
-            //  Start a game for the user
-            await DragonDice.StartGame(Context);
+            if (!DragonDice.IsPlaying(Context.User.Id))
+            {
+                //  Start a game for the user
+                await DragonDice.StartGame(Context);
+            } else if (!Context.User.IsBot)
+            {
+                //  parse input for game
+                await DragonDice.HandleInput(Context, input);
+            }            
         }
-
+        
         #endregion
     }
 }

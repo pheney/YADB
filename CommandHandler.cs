@@ -80,16 +80,7 @@ namespace YADB
             //  Abort processing any message that has an attachment
             if (context.Message.Attachments.Count != 0) return;
             if (context.Message.Embeds.Count != 0) return;
-
-            #region Special -- DragonDice Game
-
-            if (!context.User.IsBot && DragonDice.IsPlaying(context.User.Id))
-            {
-                await DragonDice.HandleInput(context, msg.Content);
-                return;
-            }
-
-            #endregion
+            
             #region Special -- Haddaway Game
 
             //  Only users can start the game
