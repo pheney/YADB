@@ -107,7 +107,7 @@ namespace YADB.Modules
             {
                 NoteData.Get.info.Add(key, data);
                 await FileOperations.SaveAsJson(NoteData.Get);
-                response = "Added note.\n**" + key + "**: _" + data + "_";
+                response = "Added note.\n**" + key + "** : _" + data + "_";
             }
 
             await Context.Channel.SendMessageAsync(response);
@@ -122,10 +122,10 @@ namespace YADB.Modules
             }
             else
             {
-                response = "Note changed for **" + key + "**\n";
-                response += "From: _";
+                response = "Note **" + key + "**\n";
+                response += "From : _";
                 response += NoteData.Get.info[key] + "_\n";
-                response +="To: _";
+                response +="To : _";
                 NoteData.Get.info[key] = data;
                 response += NoteData.Get.info[key] + "_";
                 await FileOperations.SaveAsJson(NoteData.Get);
@@ -159,17 +159,45 @@ namespace YADB.Modules
         {
             string result = "No keys matching \""+input+"\" found";
 
+            //  check for 'key' provided as index number
+            if (input[0].Equals('#'))
+            {
+                string indexRequest = input.Substring(1);
+                int index;
+                if (int.TryParse(indexRequest, out index))
+                {
+                    await ShowNoteByIndex(index-1);
+                    return;
+                }
+            }
+
             List<string> keys = PotentialKeys(input);
             foreach (string key in keys)
             {
                 if (NoteData.Get.info.ContainsKey(key))
                 {
-                    result = "**" + key + "**: " + NoteData.Get.info[key];
+                    result = "**" + key + "** : " + NoteData.Get.info[key];
                     break;
                 }
             }
 
             await Context.Channel.SendMessageAsync(result);
+        }
+
+        private async Task ShowNoteByIndex(int index)
+        {
+            if (index >= NoteData.Get.info.Count() ||index<0){
+                string message = "There are " + NoteData.Get.info.Count + " notes. ";
+                message += "When using note indicies, you must use a number between 1 and the number ";
+                message += "of notes.";
+                await Context.Channel.SendMessageAsync(message);
+            }else
+            {
+                List<string> keys = NoteData.Get.info.Keys.ToList();
+                keys.Sort();
+                string selectedKey = keys[index];
+                await ShowNote(selectedKey);
+            }
         }
 
         private async Task ListNotes()
@@ -178,13 +206,13 @@ namespace YADB.Modules
             if (NoteData.Get.info.Count > 0)
             {
                 StringBuilder sb = new StringBuilder();
-                sb.Append("**Notes**\n_");
-                List<string> keys = new List<string>();
-                foreach (var key in NoteData.Get.info.Keys)
+                sb.Append("**Notes**\n");
+                List<string> keys = NoteData.Get.info.Keys.ToList();
+                keys.Sort();
+                for(int i =0;i<keys.Count;i++)
                 {
-                    sb.Append(key + "\n");
+                    sb.Append("**"+(i+1)+"** : _" + keys[i] + "_\n");
                 }
-                sb.Append("_");
                 response = sb.ToString();
             }
             await Context.Channel.SendMessageAsync(response);
