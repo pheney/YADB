@@ -37,9 +37,9 @@ namespace YADB.Services
             return result;
         }
         
-        public static string GetInsult(string username)
+        public static string GetInsult(string username, int vulgarity = 2)
         {
-            return username + ", " + GetInsult();
+            return username + ", " + GetInsult(vulgarity);
         }
 
         public enum WordType { Phrase, Adjective, SophisticatedAdjective,
