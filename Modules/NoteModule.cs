@@ -140,6 +140,18 @@ namespace YADB.Modules
         {
             string result = "No keys matching keys found";
 
+            //  check for 'key' provided as index number
+            if (input[0].Equals('#'))
+            {
+                string indexRequest = input.Substring(1);
+                int index;
+                if (int.TryParse(indexRequest, out index))
+                {
+                    await DeleteNoteByIndex(index - 1);
+                    return;
+                }
+            }
+
             List<string> keys = PotentialKeys(input);
             foreach (string key in keys)
             {
@@ -153,6 +165,22 @@ namespace YADB.Modules
             }
 
             await Context.Channel.SendMessageAsync(result);
+        }
+
+        private async Task DeleteNoteByIndex(int index)
+        {
+            string key = GetKeyByIndex(index);
+            if (key == null)
+            {
+                string message = "There are " + NoteData.Get.info.Count + " notes. ";
+                message += "When using note indicies, you must use a number between 1 and the number ";
+                message += "of notes.";
+                await Context.Channel.SendMessageAsync(message);
+            }
+            else
+            {
+                await DeleteNote(key);
+            }
         }
 
         private async Task ShowNote(string input)
@@ -186,17 +214,15 @@ namespace YADB.Modules
 
         private async Task ShowNoteByIndex(int index)
         {
-            if (index >= NoteData.Get.info.Count() ||index<0){
+            string key = GetKeyByIndex(index);
+            if (key == null){
                 string message = "There are " + NoteData.Get.info.Count + " notes. ";
                 message += "When using note indicies, you must use a number between 1 and the number ";
                 message += "of notes.";
                 await Context.Channel.SendMessageAsync(message);
             }else
             {
-                List<string> keys = NoteData.Get.info.Keys.ToList();
-                keys.Sort();
-                string selectedKey = keys[index];
-                await ShowNote(selectedKey);
+                await ShowNote(key);
             }
         }
 
@@ -230,6 +256,20 @@ namespace YADB.Modules
             //  order from longest to shortest
             keys.Sort((left, right) => { return -left.CompareTo(right); });
             return keys;
+        }
+
+        private string GetKeyByIndex(int index)
+        {
+            if (index >= NoteData.Get.info.Count() || index < 0)
+            {
+                return null;
+            }
+            else
+            {
+                List<string> keys = NoteData.Get.info.Keys.ToList();
+                keys.Sort();
+                return keys[index];
+            }
         }
 
         [Serializable]
