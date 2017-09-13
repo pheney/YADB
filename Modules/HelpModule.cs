@@ -19,7 +19,7 @@ namespace YADB.Modules
             _service = service;
         }
 
-        [Command("#InviteLink"), Alias("#il")]
+        [Command(".InviteLink"), Alias(".il")]
         [Remarks("PM the bot's Invite Link to the owner")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task HelpInviteBot()
@@ -35,7 +35,7 @@ namespace YADB.Modules
         /// This display is PM'd to the user.
         /// The user is sent a message in their channel notifying them of the PM.
         /// </summary>
-        [Command("#help"), Alias("help", "#h")]
+        [Command(".help"), Alias("help", "#h")]
         public async Task HelpMenuAsync([Remainder]string command = null)
         {
             if (!string.IsNullOrWhiteSpace(command))

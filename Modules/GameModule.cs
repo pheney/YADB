@@ -18,7 +18,7 @@ namespace YADB.Modules
     {
         #region Insults
 
-        [Command("#insult"), Alias("#un")]
+        [Command(".insult"), Alias(".un")]
         [Remarks("Ask for an insult")]
         [MinPermissions(AccessLevel.User)]
         public async Task SpeakInsult(string user = null)
@@ -33,7 +33,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#insult add"), Alias("#ia")]
+        [Command(".insult add"), Alias(".ia")]
         [Remarks("Add to the insult database")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task AddInsult(int usage, [Remainder]string words)
@@ -57,7 +57,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#insult remove"), Alias("#ir")]
+        [Command(".insult remove"), Alias(".ir")]
         [Remarks("Remove an insult from database")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task DeleteInsult(int usage, [Remainder]string words)
@@ -81,7 +81,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#insult addphrase"), Alias("#iap")]
+        [Command(".insult addphrase"), Alias(".iap")]
         [Remarks("Add a phrase to the insult database")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task AddInsultPhrase([Remainder]string phrase)
@@ -102,7 +102,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#insult removephrase"), Alias("#irp")]
+        [Command(".insult removephrase"), Alias(".irp")]
         [Remarks("Remove a phrase from the database")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task RemoveInsultPhrase([Remainder]string phrase)
@@ -123,7 +123,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command("#insult show"), Alias("#is")]
+        [Command(".insult show"), Alias(".is")]
         [Remarks("Show part of the insult library")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task ShowInsultLibrary(int usage)
@@ -149,7 +149,7 @@ namespace YADB.Modules
             await ReplyAsync(Insult.ShowTerms(Insult.WordType.Phrase).JoinWith("\n"));
         }
 
-        [Command("#insult info"), Alias("#ii")]
+        [Command(".insult info"), Alias(".ii")]
         [Remarks("List the insult component indicies")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task InsultIndicies()
@@ -259,7 +259,7 @@ namespace YADB.Modules
             "Very doubtful"
         };
 
-        [Command("#8ball"), Alias("#8")]
+        [Command(".8ball"), Alias(".8")]
         [Remarks("Ask a question, get an answer")]
         [MinPermissions(AccessLevel.User)]
         public async Task MagicEightBall([Remainder]string question = null)
@@ -383,7 +383,7 @@ namespace YADB.Modules
         private static Thread rollThread;
         private static TimeSpan rollFrequency = new TimeSpan(1, 0, 0);
 
-        [Command("#rickroll"), Alias("#rr")]
+        [Command(".rickroll"), Alias(".rr")]
         [Remarks("We're no strangers to love")]
         [MinPermissions(AccessLevel.User)]
         public async Task RickRoll([Remainder]string abort = null)
@@ -771,7 +771,7 @@ namespace YADB.Modules
         #endregion
         #region Dragon Dice
 
-        [Command("#Quest"), Alias("#q")]
+        [Command(".Quest"), Alias(".q")]
         [Remarks("Fight dragons")]
         [MinPermissions(AccessLevel.User)]
         public async Task Quest([Remainder]string input = null)

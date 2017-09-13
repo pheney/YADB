@@ -21,7 +21,7 @@ namespace YADB.Modules
     {
         #region Status report
 
-        [Command("#Status"), Alias("#s")]
+        [Command(".Status"), Alias(".s")]
         [Remarks("Report the current state of bot's internal systems")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task StatusReport()
@@ -91,7 +91,7 @@ namespace YADB.Modules
         /// 2017-8-19
         /// This starts and stops the periodic conversation prompts.
         /// </summary>
-        [Command("#EnableAttract"), Alias("#Ea")]
+        [Command(".EnableAttract"), Alias(".Ea")]
         [Remarks("Enable / disable unprompted bot conversation starters")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task SetAttractMode(params string[] settings)
@@ -243,7 +243,7 @@ namespace YADB.Modules
         #endregion
         #region Cleverbot integration
 
-        [Command("#EnableChat"), Alias("#Ec")]
+        [Command(".EnableChat"), Alias(".Ec")]
         [Remarks("Enable / disable bot conversation")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task EnableChat([Remainder]string enabled = null)
@@ -432,7 +432,7 @@ namespace YADB.Modules
         #endregion
         #region Inspirobot integration
 
-        [Command("#Inspire"), Alias("#Inspire me", "#In")]
+        [Command(".Inspire"), Alias(".Inspire me", "#In")]
         [Remarks("Post a fresh image from Inspirobot in the current channel")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task Inspire(string channelName = null)
@@ -477,7 +477,7 @@ namespace YADB.Modules
         #endregion
         #region Start Conversation
 
-        [Command("#StartConvo"), Alias("#sc")]
+        [Command(".StartConvo"), Alias(".sc")]
         [Remarks("Prompt bot to start a conversation")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task StartConvo([Remainder]string message = null)
@@ -674,7 +674,7 @@ namespace YADB.Modules
         #endregion
         #region Puppet / Announcements
 
-        [Command("#Announce"), Alias("#An")]
+        [Command(".Announce"), Alias(".An")]
         [Remarks("PM the bot to make an announcement on another channel, using channel name or channel ID")]
         [MinPermissions(AccessLevel.ServerMod)]
         public async Task Announce([Remainder]string message)

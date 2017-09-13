@@ -8,7 +8,7 @@ using YADB.Preconditions;
 
 namespace YADB.Modules
 {
-    [Group("#Delete"), Alias("#del"), Name("Delete Commands")]
+    [Group(".Delete"), Alias(".del"), Name("Delete Commands")]
     [RequireContext(ContextType.Guild)]
     [Summary("Remove messages from a channel.")]
     public class CleanModule : ModuleBase<SocketCommandContext>

@@ -16,7 +16,7 @@ namespace YADB.Modules
             + "i.e., swimming -> to swim -> swim. For nouns, try removing all "
             + "prefixes and suffixes, i.e., anthropocentrism -> anthropocentric.";
 
-        [Command("#define"), Alias("#def")]
+        [Command(".define"), Alias(".def")]
         [Remarks("Returns the meaning of a word")]
         [MinPermissions(AccessLevel.User)]
         public async Task DefineWord(string word, string maxDefinitions = null)
@@ -45,7 +45,7 @@ namespace YADB.Modules
             await ReplyAsync("", false, builder);
         }
 
-        [Command("#synonym"), Alias("#syn")]
+        [Command(".synonym"), Alias(".syn")]
         [Remarks("Returns words with similar meanings")]
         [MinPermissions(AccessLevel.User)]
         public async Task SynonymForWord(string word, string maxDefinitions = null)
@@ -74,7 +74,7 @@ namespace YADB.Modules
             await ReplyAsync("", false, builder);
         }
 
-        [Command("#antonym"), Alias("#ant")]
+        [Command(".antonym"), Alias(".ant")]
         [Remarks("Returns words with opposite meanings")]
         [MinPermissions(AccessLevel.User)]
         public async Task AntonymForWord(string word, string maxDefinitions = null)
@@ -103,7 +103,7 @@ namespace YADB.Modules
             await ReplyAsync("", false, builder);
         }
 
-        [Command("#homonym"), Alias("#hom")]
+        [Command(".homonym"), Alias(".hom")]
         [Remarks("Lists or explains frequently misused homonyms")]
         [MinPermissions(AccessLevel.User)]
         public async Task HomonymForWord(string word = null)

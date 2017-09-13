@@ -13,7 +13,7 @@ namespace YADB.Modules
     [Name("Notes")]
     public class NoteModule : ModuleBase<SocketCommandContext>
     {
-        [Command("#Note"), Alias("#n")]
+        [Command(".Note"), Alias(".n")]
         [Remarks("Note functions (CRUD)")]
         [MinPermissions(AccessLevel.BotOwner)]
         public async Task ParseNoteCommand([Remainder]string input = null)
@@ -122,7 +122,7 @@ namespace YADB.Modules
             }
             else
             {
-                response = "Note **" + key + "**\n";
+                response = "Note **" + key + "** changed\n";
                 response += "From : _";
                 response += NoteData.Get.info[key] + "_\n";
                 response +="To : _";
@@ -141,7 +141,7 @@ namespace YADB.Modules
             string result = "No keys matching keys found";
 
             //  check for 'key' provided as index number
-            if (input[0].Equals('#'))
+            if (input[0].Equals(Configuration.Get.SubPrefix[0][0]))
             {
                 string indexRequest = input.Substring(1);
                 int index;
@@ -188,7 +188,7 @@ namespace YADB.Modules
             string result = "No keys matching \""+input+"\" found";
 
             //  check for 'key' provided as index number
-            if (input[0].Equals('#'))
+            if (input[0].Equals(Configuration.Get.SubPrefix[0][0]))
             {
                 string indexRequest = input.Substring(1);
                 int index;

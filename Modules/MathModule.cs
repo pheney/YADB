@@ -9,7 +9,7 @@ namespace YADB.Modules
     [Name("Math Commands")]
     public class MathModule : ModuleBase<SocketCommandContext>
     {
-        [Command("#mult")]
+        [Command(".mult")]
         [Remarks("Get the product of all the numbers.")]
         [MinPermissions(AccessLevel.User)]
         public async Task Mult(params float[] numbers)
@@ -19,7 +19,7 @@ namespace YADB.Modules
             await ReplyAsync(product + " is the product of " + string.Join(", ", numbers));
         }
 
-        [Command("#avg")]
+        [Command(".avg")]
         [Remarks("Compute mean value of all the numbers")]
         [MinPermissions(AccessLevel.User)]
         public async Task Avg(params float[] numbers)
@@ -28,7 +28,7 @@ namespace YADB.Modules
                 + " is the average of " + string.Join(", ", numbers));
         }
 
-        [Command("#sum")]
+        [Command(".sum")]
         [Remarks("Add all the numbers")]
         [MinPermissions(AccessLevel.User)]
         public async Task Sum(params float[] numbers)
@@ -36,7 +36,7 @@ namespace YADB.Modules
             await ReplyAsync(numbers.Sum() + " is the sum of " + string.Join(", ", numbers));
         }
 
-        [Command("#std")]
+        [Command(".std")]
         [Remarks("Add all the numbers")]
         [MinPermissions(AccessLevel.User)]
         public async Task StandardDeviation(params float[] numbers)
@@ -44,7 +44,7 @@ namespace YADB.Modules
             await ReplyAsync(StandardDev(numbers) + " is the Standard Deviation of " + string.Join(", ", numbers));
         }
 
-        [Command("#var")]
+        [Command(".var")]
         [Remarks("Add all the numbers")]
         [MinPermissions(AccessLevel.User)]
         public async Task Variance(params float[] numbers)
