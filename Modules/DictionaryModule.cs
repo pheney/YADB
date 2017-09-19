@@ -42,7 +42,7 @@ namespace YADB.Modules
                 Description = (Bold(word) + ", " + definition).CapLength()
             };
 
-            await ReplyAsync("", false, builder);
+            await ReplyAsync("", false, builder.Build());
         }
 
         [Command(".synonym"), Alias(".syn")]
@@ -71,7 +71,7 @@ namespace YADB.Modules
                 Description = (Bold(word) + ", " + synonyms).CapLength()
             };
 
-            await ReplyAsync("", false, builder);
+            await ReplyAsync("", false, builder.Build());
         }
 
         [Command(".antonym"), Alias(".ant")]
@@ -100,7 +100,7 @@ namespace YADB.Modules
                 Description = (Bold(word) + ", " + antonyms).CapLength()
             };
 
-            await ReplyAsync("", false, builder);
+            await ReplyAsync("", false, builder.Build());
         }
 
         [Command(".homonym"), Alias(".hom")]
@@ -111,7 +111,7 @@ namespace YADB.Modules
             if (word != null)
             {
                 //  Explain a specific word
-                await ReplyAsync("", false, OED.GetHomophone(word));
+                await ReplyAsync("", false, OED.GetHomophone(word).Build());
                 return;
             }
 

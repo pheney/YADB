@@ -17,6 +17,26 @@ namespace YADB.Services
     {
         #region Public API
 
+        private static int vulgarityIndex = 2;
+        public static int Vulgarity { get { return vulgarityIndex; }
+        set { vulgarityIndex = value;
+                vulgarityIndex = vulgarityIndex < 0 ? 0 : vulgarityIndex;
+                vulgarityIndex = vulgarityIndex > 3 ? 3 : vulgarityIndex;
+            }
+        }
+
+        public static string VulgarityAsString()
+        {
+            switch (vulgarityIndex)
+            {
+                case 0: return "child";
+                case 1:return "angsty American teenage COD player";
+                case 2:return "British";
+                case 3:return "Australian";
+                default:
+                    return "Invalid index";
+            }
+        }
         public static string GetInsult(int vulgarity = 2)
         {
             if (InsultData.Get == null) InsultData.Init();

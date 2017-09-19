@@ -17,26 +17,135 @@ namespace YADB.Modules
     public class GameModule : ModuleBase<SocketCommandContext>
     {
         #region Insults
-
-        [Command(".insult"), Alias(".un")]
-        [Remarks("Ask for an insult")]
+        
+        [Command(".insult"), Alias(".i")]
+        [Remarks("Insult commands")]
         [MinPermissions(AccessLevel.User)]
-        public async Task SpeakInsult(string user = null)
+        public async Task InsultCommand(string command = null, [Remainder]string data = null)
+        {
+            if (!string.IsNullOrWhiteSpace(command))
+            {
+                string[] dataArray;
+                int category;
+
+                //  parse command
+                switch (command.ToLower())
+                {
+                    case "help":
+                    case "h":
+                        //  show insult commands
+                        var insultHelp = new EmbedBuilder();
+                        insultHelp.Color = Constants.SeverityToColor(Constants.MessageSeverity.Info);
+                        insultHelp.Description += "Help : this list\n";
+                        if (Configuration.Get.Owners.Contains(Context.User.Id))
+                        {
+                            insultHelp.Description += "AddWords : [category] [space-delimited word-list]\n";
+                            insultHelp.Description += "DeleteWords : [category] [space-delimited word-list]\n";
+                            insultHelp.Description += "AddPhrase : add an insult wrapper using {insult}. Use {def} and {indef} for articles.\n";
+                            insultHelp.Description += "DeletePhrase : deletes an insult wrapper\n";
+                            insultHelp.Description += "ShowWords : [category] shows all items in the category\n";
+                            insultHelp.Description += "ShowCategories : shows all categories\n";
+                            insultHelp.Description += "Vulgarity : [index] set or view vulgarity level\n";
+                        }
+                        insultHelp.Description += "[username] : insults the user\n";
+                        insultHelp.Description += "*nothing* : display a random insult";
+                        await ReplyAsync("",false,insultHelp.Build());
+                        break;
+                    case "addwords":
+                    case "aw":
+                        dataArray = data.Split(' ');
+                        if (!int.TryParse(dataArray[0], out category)
+                            || string.IsNullOrWhiteSpace(dataArray[1]))
+                        {
+                            await (InsultCommand("help"));
+                            return;
+                        }
+                        await AddInsult(category, dataArray.JoinWith(" ", 1));
+                        break;
+                    case "deletewords":
+                    case "dw":
+                        dataArray = data.Split(' ');
+                        if (!int.TryParse(dataArray[0], out category)
+                            || string.IsNullOrWhiteSpace(dataArray[1]))
+                        {
+                            await (InsultCommand("help"));
+                            return;
+                        }
+                        await DeleteInsult(category, dataArray.JoinWith(" ", 1));
+                        break;
+                    case "addphrase":
+                    case "ap":
+                        if (string.IsNullOrWhiteSpace(data))
+                        {
+                            await InsultCommand("help");
+                            return;
+                        }
+                        await AddInsultPhrase(data);
+                        break;
+                    case "deletephrase":
+                    case "dp":
+                        if (string.IsNullOrWhiteSpace(data))
+                        {
+                            await InsultCommand("help");
+                            return;
+                        }
+                        await DeleteInsultPhrase(data);
+                        break;
+                    case "showwords":
+                    case "sw":
+                        dataArray = data.Split(' ');
+                        if (!int.TryParse(dataArray[0], out category))
+                        {
+                            await InsultCommand("help");
+                            return;
+                        }
+                        await ShowInsultLibrary(category);
+                        break;
+                    case "showcategories":
+                    case "sc":
+                        await ShowInsultCategories();
+                        break;
+                    case "vulgarity":
+                    case "v":
+                        if (string.IsNullOrWhiteSpace(data))
+                        {
+                            await Vulgarity();
+                        }
+                        else
+                        {
+                            dataArray = data.Split(' ');
+                            if (int.TryParse(dataArray[0], out category))
+                            {
+                                await Vulgarity(category);
+                            }
+                        }
+                        break;
+                    default:
+                        //  "command" is actually a person.
+                        //  So insult that person.
+                        await ShowInsult(command);
+                        break;
+                }
+                return;
+            }
+
+            //  Show random insult
+            await ShowInsult();
+        }
+        
+        private async Task ShowInsult(string user = null)
         {
             SocketGuildUser u = Context.Guild.Users.Where(x => x.Username.Equals(user, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 
-            if (u==null) await ReplyAsync(Insult.GetInsult());
+            if (u==null) await ReplyAsync(Insult.GetInsult(Insult.Vulgarity));
             else
             {
                 string name = string.IsNullOrWhiteSpace(u.Nickname) ? u.Username : u.Nickname;
-                await ReplyAsync(Insult.GetInsult(name));
+                await ReplyAsync(Insult.GetInsult(name, Insult.Vulgarity));
             }
         }
 
-        [Command(".insult add"), Alias(".ia")]
-        [Remarks("Add to the insult database")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task AddInsult(int usage, [Remainder]string words)
+        private async Task AddInsult(int usage, [Remainder]string words)
         {
             if (usage == (int)Insult.WordType.Phrase) return;
 
@@ -57,10 +166,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command(".insult remove"), Alias(".ir")]
-        [Remarks("Remove an insult from database")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task DeleteInsult(int usage, [Remainder]string words)
+        private async Task DeleteInsult(int usage, [Remainder]string words)
         {
             if (usage == (int)Insult.WordType.Phrase) return;
 
@@ -81,10 +187,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command(".insult addphrase"), Alias(".iap")]
-        [Remarks("Add a phrase to the insult database")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task AddInsultPhrase([Remainder]string phrase)
+        private async Task AddInsultPhrase([Remainder]string phrase)
         {
             if (!IsSafePhrase(phrase))
             {
@@ -102,10 +205,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command(".insult removephrase"), Alias(".irp")]
-        [Remarks("Remove a phrase from the database")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task RemoveInsultPhrase([Remainder]string phrase)
+        private async Task DeleteInsultPhrase([Remainder]string phrase)
         {
             if (!IsSafePhrase(phrase))
             {
@@ -123,10 +223,7 @@ namespace YADB.Modules
             }
         }
 
-        [Command(".insult show"), Alias(".is")]
-        [Remarks("Show part of the insult library")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task ShowInsultLibrary(int usage)
+        private async Task ShowInsultLibrary(int usage)
         {
             if (usage == (int)Insult.WordType.Phrase)
             {
@@ -149,10 +246,7 @@ namespace YADB.Modules
             await ReplyAsync(Insult.ShowTerms(Insult.WordType.Phrase).JoinWith("\n"));
         }
 
-        [Command(".insult info"), Alias(".ii")]
-        [Remarks("List the insult component indicies")]
-        [MinPermissions(AccessLevel.BotOwner)]
-        public async Task InsultIndicies()
+        private async Task ShowInsultCategories()
         {
             string result = "";
             int i = 0;
@@ -162,6 +256,20 @@ namespace YADB.Modules
                 i++;
             }
             await ReplyAsync(result);
+        }
+
+        private async Task Vulgarity(int vulgarity = -1)
+        {
+            if (vulgarity == -1)
+            {
+                //  show current setting
+                await ReplyAsync("Vulgarity index: "+Insult.Vulgarity+" ("+Insult.VulgarityAsString()+")");
+            }else
+            {
+                //  change setting
+                Insult.Vulgarity = vulgarity;
+                await Vulgarity();
+            }
         }
 
         private bool IsSafePhrase(string phrase)
